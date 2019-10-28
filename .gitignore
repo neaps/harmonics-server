@@ -1,0 +1,4 @@
+*.pem
+.local/
+.env
+app/node_modules

@@ -1,0 +1,401 @@
+// -*- c++ -*-
+// $Id: Congen 4154 2012-01-05 00:45:39Z flaterco $
+
+/*  congen:  constituent generator.
+    Copyright (C) 1997  David Flater.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#ifndef CONGEN_HEADER
+#define CONGEN_HEADER
+
+#include <stdint.h>
+#include <valarray>
+#include <string>
+#include <vector>
+#include <istream>
+
+
+// This file is (or was) automatically mangled to get rid of UTF-8
+// characters like Greek letters and subscripts.  As of g++ 4.2.0,
+// Greek letters in identifiers can be made to work (technically, if
+// not readably) by translating them to \uNNNN syntax and using the
+// -fextended-identifiers switch, but subscripts, primes, and double
+// primes are still rejected by the compiler.
+// "error: universal character \u2081 is not valid in an identifier"
+
+
+/* The reader is assumed to be familiar with the following
+   publication, hereafter referred to as "SP 98:"
+
+   Manual of Harmonic Analysis and Prediction of Tides.  Special
+   Publication No. 98, Revised (1940) Edition (reprinted 1958 with
+   corrections; reprinted again 1994).  United States Government
+   Printing Office, 1994.
+
+   SP 98 does not cover Doodson-style constituents.  If using those,
+   the following publication may be helpful:
+
+   Foreman, M.G.G., 1977.  Manual for Tidal Heights Analysis and
+   Prediction.  Pacific Marine Science Report 77-10, Institute of
+   Ocean Sciences, Patricia Bay, Sidney, B.C. (2004 revision).
+*/
+
+
+// Apart from the names of the constituents, the following
+// astronomical terms from SP 98 are used in this header file:
+
+// (Vₒ+u)   Constituent argument at beginning of a tidal series
+// f        Node factor
+
+// V        Principal portion of constituent argument
+// T        Hour angle of mean sun
+// s        Mean longitude of moon
+// h        Mean longitude of sun
+// p        Mean longitude of lunar perigee
+// p₁       Mean longitude of solar perigee
+
+// u        Part of constituent argument depending upon variations in
+//          obliquity of lunar orbit
+// ξ        Longitude in moon's orbit of lunar intersection
+// ν        Right ascension of lunar intersection
+// ν′       Term in argument of lunisolar constituent K₁
+// 2ν″      Term in argument of lunisolar constituent K₂
+// Q        Term in argument of constituent M₁
+// R        Term in argument of constituent L₂
+// Qᵤ       Term in argument of constituent M₁
+// N        Longitude of moon's node
+
+
+namespace Congen {
+
+
+  // The interface to libcongen makes use of valarrays whose lengths
+  // and contents are prescribed, but not checkable at compile time.
+  // Thus there is the risk that future changes to the interface could
+  // result in older programs compiling OK but running incorrectly.
+  // To prevent this, client programs should contain a preprocessor
+  // check like the following:
+  //   #if Congen_interfaceRevision != 0
+  //   #error trying to compile with an incompatible version of libcongen
+  //   #endif
+  // The value will increment only if and when one of those risky
+  // changes is made to the interface.
+
+  #define Congen_interfaceRevision 0
+
+
+  // Similarly, the next function can be used in autoconf
+  // (configure.ac) scripts as follows to test that the library that
+  // you are about to link with is the right version:
+  //   AC_MSG_CHECKING([for libcongen (interfaceRevision_0)])
+  //   LIBS="$LIBS -lcongen"
+  //   AC_LINK_IFELSE(
+  //    [AC_LANG_PROGRAM([[#include <Congen>]],
+  //                     [[Congen::interfaceRevision_0();]])],
+  //     AC_MSG_RESULT([yes]),
+  //    [AC_MSG_RESULT([NO])
+  //     AC_MSG_ERROR([either cannot find libcongen or found wrong version; try setting LDFLAGS.])
+  //    ])
+  // If invoked it does nothing.
+
+  void interfaceRevision_0 ();
+
+
+  // Where valarrays are used to contain coefficients of the following
+  // terms of V and u, these are the indices to the respective
+  // coefficients.
+
+  // V portion of argument, evaluated at beginning of year.
+  const uint_fast8_t T_index   = 0;
+  const uint_fast8_t s_index   = 1;
+  const uint_fast8_t h_index   = 2;
+  const uint_fast8_t p_index   = 3;
+  const uint_fast8_t p₁_index  = 4;
+  const uint_fast8_t c_index   = 5;    // Constant angle (degrees).
+  const uint_fast8_t numVterms = 6;
+
+  // u portion of argument, evaluated at mid-year.
+  const uint_fast8_t ξ_index   = 0;
+  const uint_fast8_t ν_index   = 1;
+  const uint_fast8_t ν′_index  = 2;
+  const uint_fast8_t 2ν″_index = 3;
+  const uint_fast8_t Q_index   = 4;
+  const uint_fast8_t R_index   = 5;
+  const uint_fast8_t Qᵤ_index  = 6;
+  const uint_fast8_t numuterms = 7;
+
+
+  // With the exception of "unity," for which we use 1, Congen and SP
+  // 98 Table 2 identify node factor formulas by their formula numbers
+  // in SP 98.  The following constants are optional syntactic sugar
+  // that may at least clarify matters for those without access to SP
+  // 98.
+
+  const uint_fast8_t f_1   = 1;
+  const uint_fast8_t f_Mm  = 73;
+  const uint_fast8_t f_Mf  = 74;
+  const uint_fast8_t f_O₁  = 75;
+  const uint_fast8_t f_J₁  = 76;
+  const uint_fast8_t f_OO₁ = 77;
+  const uint_fast8_t f_M₂  = 78;
+  const uint_fast8_t f_KJ₂ = 79;
+  const uint_fast8_t f_M₁C = 144;  // A71 in SP 98.
+  const uint_fast8_t f_M₃  = 149;
+  const uint_fast8_t f_M₁  = 206;  // Unique U.S. definition.
+  const uint_fast8_t f_L₂  = 215;
+  const uint_fast8_t f_K₁  = 227;
+  const uint_fast8_t f_K₂  = 235;
+
+
+  // Compound constituents may be specified using coefficients of the
+  // following popular constituents.
+
+  const uint_fast8_t O₁_index = 0;
+  const uint_fast8_t K₁_index = 1;
+  const uint_fast8_t P₁_index = 2;
+  const uint_fast8_t M₂_index = 3;
+  const uint_fast8_t S₂_index = 4;
+  const uint_fast8_t N₂_index = 5;
+  const uint_fast8_t L₂_index = 6;
+  const uint_fast8_t K₂_index = 7;
+  const uint_fast8_t Q₁_index = 8;
+  const uint_fast8_t ν₂_index = 9;
+  const uint_fast8_t S₁_index = 10;
+  const uint_fast8_t M₁_DUTCH_index = 11;
+  const uint_fast8_t λ₂_index = 12;
+  const uint_fast8_t numCompoundBases = 13;
+
+
+  typedef uint16_t year_t;  // Range 1..4000
+
+
+  // Satellites for Doodson-style constituents get specified with a
+  // vector of Satellite structs.  Congen does not perform adjustments
+  // for latitude-dependent satellites, so the client should either
+  // apply the latitude adjustment to r before passing it to Congen or
+  // omit those satellites entirely.
+
+  // It appears to be traditional Doodson usage to work with the
+  // negative of N instead of N itself.  Those deltas need to be
+  // negated before passing to Congen.
+
+  struct Satellite {
+    double r;    // amplitude ratio vs. the main constituent
+    double Δp;   // delta of coefficient of p vs. the main constituent
+    double ΔN;   // delta of coefficient of N vs. the main constituent
+    double Δp₁;  // delta of coefficient of p₁ vs. the main constituent
+    double α;    // phase correction vs. the main constituent (degrees)
+  };
+
+
+  struct Constituent {
+
+
+    // A Constituent is maintained using valarrays of equilibrium
+    // arguments and node factors for the range of years that was
+    // specified at the time of its construction.  Operations such as
+    // adding two Constituents together are performed as vector
+    // operations on those valarrays.  The client program must ensure
+    // that every Constituent participating in such operations was
+    // created using the same range of years; otherwise, garbage in,
+    // garbage out.
+
+    // libcongen will never normalize the (Vₒ+u) attribute of any
+    // Constituent to [0, 360) or (-180, 180] degrees.  The helper
+    // functions normalize, snormalize, and makeArrays supply
+    // normalized results as needed for export.
+
+    std::string name;
+    double speed;                     // degrees per hour
+    std::valarray<double> (Vₒ+u);     // degrees; [0] is firstYear
+    std::valarray<double> f;          // [0] is firstYear
+
+
+    // Default constructed constituents are only placeholders.  Speed
+    // is initalized to zero; (Vₒ+u) and f are left in their default
+    // initial states (zero length).  Name is set to "default".
+    Constituent ();
+
+
+    // This constructor is semantically equivalent to default
+    // construction followed by resize(numYears).
+    explicit Constituent (uint16_t numYears);
+
+
+    // Copy constructor is semantically equivalent to default
+    // construction followed by assignment.
+    Constituent (const Constituent &x);
+
+
+    // Constructor for Darwin-style constituents.
+
+    // Coefficients for terms of V and u are passed in valarrays of
+    // size 6 and 7, respectively.  See above for the ordering.
+
+    // f_formula is the node factor formula number from SP 98; see above.
+
+    // Speed is calculated as of the beginning of the year specified
+    // by epochForSpeed.  For NOS compatibility, use 1900.
+
+    Constituent (const std::string &name_in,
+		 const std::valarray<double> &V_coefficients,
+		 const std::valarray<double> &u_coefficients,
+		 uint_fast8_t f_formula,
+		 year_t firstYear,
+		 year_t lastYear,
+                 year_t epochForSpeed);
+
+
+    // Constructor for Doodson-style constituents.  A vector of
+    // Satellites substitutes for the u coefficients and node factor
+    // formula, but otherwise the operation is exactly the same as the
+    // previous constructor.
+
+    Constituent (const std::string &name_in,
+		 const std::valarray<double> &V_coefficients,
+		 const std::vector<Satellite> &satellites,
+		 year_t firstYear,
+		 year_t lastYear,
+                 year_t epochForSpeed);
+
+
+    // The other constructors and the operations on Constituent are
+    // sufficient to enable clients to define base constituents and
+    // compute compound constituents from them.  However, constructing
+    // the same base constituents in every client is painful and
+    // redundant.  This constructor allows compound constituents to be
+    // specified in terms of the 13 "popular" constituents listed
+    // above.  Their definitions are compiled in, so each of those 13
+    // may be specified in lazy fashion using a coefficient of 1 for
+    // itself.
+
+    Constituent (const std::string &name_in,
+		 const std::valarray<double> &coefficients,
+		 year_t firstYear,
+		 year_t lastYear,
+                 year_t epochForSpeed);
+
+
+    // Assignment duplicates every field regardless of current state.
+    Constituent &operator=  (const Constituent &x);
+
+
+    // Add constituents together to produce a compound constituent.
+    // The name is reset to "nameless".
+    Constituent &operator+= (const Constituent &x);
+
+
+    // Multiply by a scalar.
+    // The name is reset to "nameless".
+    Constituent &operator*= (double x);
+
+
+    // Resize destroys any data currently stored in the Constituent.
+    //   - (Vₒ+u) is set to the specified size and filled with zeroes.
+    //   - f is set to the specified size and filled with ones.
+    //   - speed is set to zero.
+    //   - name is set to "zero".
+    void resize (uint16_t numYears);
+
+
+  };
+
+
+  // Reminder to self:  The C++ argument-dependent name lookup rules
+  // conveniently cause these operations to work without a Congen::
+  // qualifier by virtue of the fact that a Constituent is involved.
+
+  Constituent operator+ (const Constituent &x, const Constituent &y);
+  Constituent operator* (double x, const Constituent &y);
+  Constituent operator* (const Constituent &y, double x);
+
+
+  // As a sanity check, generate tables from SP 98 and send to stdout.
+  // Make sure your terminal is using a monospace font, UTF-8, and at
+  // least 87 characters wide.  LANG=en_US.utf8 xterm -fn
+  //   -misc-fixed-medium-r-normal--20-200-75-75-c-100-iso10646-1 &
+  void tables();
+
+
+  // ----- Helper functions -----
+
+
+  // Normalize an angle to [0, 360) degrees, round to the specified
+  // number of decimals (> 0, ≤ 20), and return as a string of length
+  // decimals+4.  Halfway cases are rounded according to the
+  // implementation-dependent behavior of the %f printf format, which
+  // for GNU/Linux is the weird "nearest even number" rule.
+  std::string normalize (double degrees, uint_fast8_t decimals);
+
+
+  // Normalize an angle to (-180, 180] degrees, round to the specified
+  // number of decimals (> 0, ≤ 20), and return as a string of length
+  // decimals+5.  Halfway cases are rounded according to the
+  // implementation-dependent behavior of the %f printf format, which
+  // for GNU/Linux is the weird "nearest even number" rule.
+  std::string snormalize (double degrees, uint_fast8_t decimals);
+
+
+  // Parse the text format used for congen_input.txt in Congen 1.5 and
+  // earlier and append any Constituents specified therein to
+  // constituents.
+
+  // A Darwin-style constituent is specified as a line of this form:
+  //   name  Basic   T s h p p₁ c   ξ ν ν′ 2ν″ Q R   f_formula
+
+  // A Doodson-style constituent begins with a line of this form:
+  //   name  Doodson   T s h p p₁ c   #-satellites
+  // followed by additional lines that specify the indicated number of
+  // satellites, possibly more than one per line.  Each satellite has
+  // the following form, which is identical to the format used in the
+  // IOS tidal package's tide3.dat file:
+  //       Δp -ΔN Δp₁ α r[RN]
+  // (A capital letter 'R' and a digit are optionally suffixed to r.)
+  // Please note:
+  //   Consistent with IOS, ΔN is NEGATED.
+  //   Consistent with IOS, α is specified in ROTATIONS, not degrees.
+  //   Latitude-dependent satellites (those with RN) are IGNORED.
+
+  // A compound constituent is specified as a line of this form:
+  //   name  Compound   O₁ K₁ P₁ M₂ S₂ N₂ L₂ K₂ Q₁ ν₂ S₁ M₁-DUTCH λ₂
+  // For compound constituents, trailing zeroes may be omitted.
+
+  // Comment lines contain # in the first column.
+
+  // Returns 0 if input parsed OK, line number containing error if not.
+
+  unsigned parseLegacyInput (std::istream &is,
+			     year_t firstYear,
+			     year_t lastYear,
+			     year_t epochForSpeed,
+			     std::vector<Constituent> &constituents);
+
+
+  // Convert a vector of Constituents into the plain C arrays that are
+  // expected by libtcd's create_tide_db function.  It is the client's
+  // responsibility to deallocate the memory using delete [] (or
+  // choose not to).  Equilibrium arguments are normalized to [0.00,
+  // 359.99] as required by libtcd.
+
+  void makeArrays (const std::vector<Constituent> &constituents,
+		   char **&names,
+		   double *&speeds,
+		   float **&equilibriumArgs,
+		   float **&nodeFactors);
+
+}
+
+#endif

@@ -1,0 +1,157 @@
+-*- text -*-
+
+Version 1.7, 2018-01-14:
+
+  congen_input.txt: changed definition of 3KM5; added KJ2-IHO; revised the
+  verbose header commentary.
+
+  Added scripts XDO2Basic.rb and Compound2Basic.rb.
+
+  Updated build scripts.  Fixed race between congen program and libcongen in
+  parallel builds.  Deleted autoconf check for GCC older than 3.4 since
+  autoreconf now spews nuisance warnings about the test code and nobody is
+  going to have such an old GCC anymore anyway.
+
+  Installed diff_congen_output into bin along with the new scripts.
+  Installed congen_input.txt and README into pkgdatadir.
+
+  No changes to libcongen or the congen app.
+
+Version 1.6.2, 2013-02-17:
+
+  (Code rot) Added const to compound literals to work around compilation
+  failure under GCC 4.7.x and resolve Gentoo Bug 457992.  Bug report credit:
+  Diego Elio Pettenò, Julian Ospald.  The underlying problem is described in
+  GCC Bug 53220, especially the "new error is too strict" exchange of
+  2012-06-20.
+
+Version 1.6.1 release 2, 2012-01-04:
+
+  (Usability) Versions of GCC older than 3.4 are now unconditionally rejected
+  by configure.
+
+  (Usability) Added autoconf check for existence of STL.
+
+  (Code rot) Regenerated all build scripts.
+
+  Absolutely nothing was changed in the programs themselves.  This is simply
+  a repackaging and re-release of Version 1.6.1 with better build scripts.
+  It is not necessary to "upgrade" if Version 1.6.1 is already installed.
+
+Version 1.6.1, 2010-05-22:
+  (Code rot) Added #include <cstring> to satisfy g++ 4.4.3.
+
+Version 1.6, 2007-08-18:
+
+  Rewrote everything.  Purged gratuitous complexity.  Stopped trying
+  to share code with XTide.
+
+  Moved the useful functionality into a separate library, libcongen,
+  declared in the header file Congen.  The program congen is now a
+  thin client of this library.  Other programs needing to generate
+  constituents (such as harmbase) can do so using libcongen,
+  eliminating the need for temporary files and an invocation of the
+  congen program.
+
+  Dropped support for the obsolete command-line options -a0 and -map.
+
+  Added congen switch -tcd to create a TCD file directly in lieu of
+  producing the usual text format output, if libtcd is available.
+
+  Automake'd the distribution.
+  - Not using AM_MAINTAINER_MODE.
+  - make dist-bzip2 does the right thing.
+
+  Relicensed under GPLv3.
+
+  Purged FYI directory; added URLs to README instead.
+
+Version 1.5, 2006-08-25:
+  Made -a1 the default.
+  Put updated IHO constituents PDF in FYI subdirectory.
+
+Version 1.4.9r2, 2005-02-16:
+  Moved extraneous constituent definition info into FYI subdirectory.
+  Added spreadsheet from Art Najjar to the collection.
+  No changes to the software.
+
+Version 1.4.9, 2004-10-19:
+  Removed extra semicolons in Angle.cc.
+
+Version 1.4.8, 2004-09-29:
+  Fixed spelling of XTide in output comments.
+  Removed trailing spaces from constituent names in output.
+  Fixed an assertion failure caused by floating point roundoff.
+  Cleaned up compiler warnings, added -Wall to CFLAGS.
+
+Version 1.4.7r2, 2004-08-16:
+  Minor updates in README.
+  Added congen_input.txt and Constituents.pdf.
+  No changes to the software.
+
+Version 1.4.7, 2004-08-15:
+  Finally tracked down and killed the intermittent bug that sometimes
+  caused constituents to get speeds like 27516r+210.0293159 when
+  congen was compiled with certain versions of certain compilers.
+  There was a variable that needed to be initialized to zero.
+
+Version 1.4.6, 2003-02-20:
+  Expunged 'bool' in favor of more portable int.
+  Added -lm to Makefile.
+
+Version 1.4.5, 2003-01-17:
+  Added a LL suffix to the long long int literal to make GCC 2.95.x happy
+  with it.
+
+Version 1.4.4, 2002-12-23:
+  Added return statement to assignment operator in TabulatedConstituent.
+  This return is not used but some compilers required it.
+
+Version 1.4.3, 2002-12-20:
+  If interval_rep_t is bigger than time_t, cast the times to
+  interval_rep_t before subtracting.
+
+Version 1.4.2, 2002-12-19:
+  'long long int' is not necessarily the one we wanted -- patched in
+  logic to determine the correct data type.
+  Fixed delete [] syntax.
+
+Version 1.4.1, 2002-12-11:
+  Fixed two memory leaks introduced in 1.4.
+
+Version 1.4, 2002-12-10:
+  Worked around 32-bit time_t to enable years before 1970 and after 2037.
+  Added "level of ambition" control for fundamental astronomical calculations.
+  Added switches to set begin and end years.
+  Added -sp98test switch.
+  Fixed old dangling semicolon error in Dstr.cc.
+  Expunged C++ streams.
+  Deleted some of the code that was carried over from XTide but is useless
+    in Congen.
+  Worked around a tricky overload resolution bug related to
+    TabulatedConstituent's copy constructor and assignment operators.
+
+Version 1.3, 2001-01-10:
+  In congen.hh, changed stream.h to iostream.h.
+  In Dstr.cc, fixed a syntax nit.
+  Added node formula 144 for M1C.
+  Fixed bug in line numbers given by error messages.
+  Changed input format to explicitly specify Basic, Compound, or Doodson.
+  Added NU2, S1, M1-DUTCH, and LDA2 as compoundable basic constituents.
+  Enabled compound constituent multipliers to be real numbers.  (The
+  IOS formulation of M7 is 3.5 * M2 !)
+
+Version 1.2.1, 2000-04-16:  Fixed segfault on Doodson constituents
+having zero satellites.
+
+Version 1.2, 2000-04-11:  Added support for approximating Doodson
+constituents based on Foreman, M.G.G., Manual for Tidal Heights
+Analysis and Prediction, Pacific Marine Science Report 77-10,
+Institute of Ocean Sciences, Patricia Bay, Sidney, B.C., 1977 (revised
+1996).  Available from
+http://www.pac.dfo-mpo.gc.ca/sci/osap/projects/tidpack/tidpack_e.htm.
+
+Version 1.1, 1997-08-03:  Added Q1 to the constituents used to
+generate compound constituents.
+
+Version 1.0 released 1997-07-29

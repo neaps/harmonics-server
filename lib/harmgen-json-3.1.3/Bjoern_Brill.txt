@@ -1,0 +1,313 @@
+From brill@samson.math.uni-frankfurt.de  Tue Jan 11 19:21:15 2000
+X-VM-v5-Data: ([nil nil nil nil nil nil nil nil nil]
+	["13835" "Wednesday" "5" "January" "2000" "19:52:32" "+0100" "Bjoern Brill" "brill@samson.math.uni-frankfurt.de" nil "285" "harmgen improvements (fwd)" "^From:" nil nil "1" nil nil nil nil nil]
+	nil)
+Return-Path: <brill@samson.math.uni-frankfurt.de>
+Received: from localhost (localhost [127.0.0.1])
+	by nameless.flaterco.com (8.9.3/8.9.1) with ESMTP id TAA01754
+	for <dave@localhost>; Tue, 11 Jan 2000 19:21:06 -0500
+Received: from mail70.pair.com
+	by localhost with POP3 (fetchmail-5.0.7)
+	for dave@localhost (single-drop); Tue, 11 Jan 2000 19:21:10 -0500 (EST)
+Received: from samson.math.uni-frankfurt.de (brill@samson.math.uni-frankfurt.de [141.2.92.112]) by tama.pair.com (8.9.1/8.6.12) with ESMTP id NAA13201 for <software@flaterco.com>; Wed, 5 Jan 2000 13:49:13 -0500 (EST)
+X-Envelope-To: <software@flaterco.com>
+Received: from localhost (brill@localhost)
+	by samson.math.uni-frankfurt.de (8.8.8/8.8.8) with ESMTP id TAA11368
+	for <software@flaterco.com>; Wed, 5 Jan 2000 19:52:32 +0100
+X-Sender: brill@samson.math.uni-frankfurt.de
+Message-ID: <Pine.LNX.4.05.10001051931110.11289-200000@samson.math.uni-frankfurt.de>
+MIME-Version: 1.0
+Content-Type: MULTIPART/MIXED; BOUNDARY="42823772-501802275-941482049=:1546"
+Content-ID: <Pine.LNX.4.05.10001051931111.11289@samson.math.uni-frankfurt.de>
+X-UIDL: 265b6d484ab118278353e1bfbeaed92a
+From: Bjoern Brill <brill@samson.math.uni-frankfurt.de>
+To: David Flater <software@flaterco.com>
+Subject: harmgen improvements (fwd)
+Date: Wed, 5 Jan 2000 19:52:32 +0100 (MET)
+
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+  Send mail to mime@docserver.cac.washington.edu for more info.
+
+--42823772-501802275-941482049=:1546
+Content-Type: TEXT/PLAIN; CHARSET=US-ASCII
+Content-ID: <Pine.LNX.4.05.10001051931112.11289@samson.math.uni-frankfurt.de>
+
+Hello Dave,
+
+I've noticed that you lost my mail due to a disk crash, so I send it
+again. I have found some small, but possibly confusing typos in my
+original mail and decided to simply correct them in the
+following "forwarded" message which, thus, is not 100% identical to the
+original.
+
+
+Best regards,
+
+Bjoern
+
+--
+Bj"orn Brill <brill@fs.math.uni-frankfurt.de>
+Frankfurt am Main, Germany
+
+
+
+---------- Forwarded message ----------
+Date: Mon, 1 Nov 1999 19:47:29 +0100 (MET)
+From: Bjoern Brill <brill@fs.math.uni-frankfurt.de>
+To: David Flater <software@flaterco.com>
+Subject: harmgen improvements
+
+Dear Dave,
+
+I have had a look at yout interesting harmgen program and would like to
+propose two possible improvements.
+
+1. Attached to this mail is a small C++ program that does the (matrix part
+of the) least squares stuff fast and memory efficient and has produced
+quite accurate results on some large datasets I have tested it with.
+You may give it a try on the kind of data you're processing. If it does
+what you want, you could get rid of octave and make harmgen a tide mode.
+
+The algorithm is basically the same as the one given in Charles Reads
+excellent explanation.
+
+2. The "within one year" restriction can be removed the following way:
+least squares fitting is not restricted to trigonometric polynomials, you
+simply need to write the function to be fitted as a "linear combination"
+
+  sum_k (parameter_k * f_k(t))
+
+where f_k() are (linearly independent) functions not depending on the
+parameters.
+Now your function is
+
+  H(t) = datum +
+   sum_w (amplitude_w * node_w(t) * cos(speed_w * t + equi_w(t) - phase_w)
+
+where the time dependency in node_w and equi_w comes from the fact that
+the node factor and equilibrium arguments depend on the year (I assume 
+the equilibrium arguments are normalized so that time does NOT start
+again at 0 with the beginning of every new year).
+If you break the summands in sum_w (...) down with the usual
+
+  cos(x - y) = cos(x) * cos(y) + sin(x) * sin(y)
+
+you can write every summand as
+
+  amplitude_w * cos(phase_w) * node_w(t) * cos(speed_w * t + equi_w(t)) 
+   + amplitude_w * sin(phase_w) * node_w(t) * sin(speed_w * t + equi_w(t))
+
+and, setting (as before)
+
+  C_w = amplitude_w * cos(phase_w)
+  S_w = amplitude_w * sin(phase_w)
+
+and
+
+  c_w(t) = node_w(t) * cos(speed_w * t + equi_w(t)
+  s_w(t) = node_w(t) * sin(speed_w * t + equi_w(t)
+
+you have all parameter dependency put into C_w and S_w and get
+
+  H(t) = datum * 1 + sum_w (C_w * c_w(t)) + sum_w (S_w * s_w(t))
+
+So if you have tide readings h_1, ..., h_m at times t_1, ..., t_m simply
+stuff the vectors
+
+  [1, ..., 1]
+  [c_w(t_1), ..., c_w(t_m)]      (for all w)
+  [s_w(t_1), ..., s_w(t_m)]      (for all w)
+
+together in a matrix and do least squares for the vector [h_1, ... , h_m]
+as before to get datum, the C_w and S_w. Also as before, amplitude and
+phase are obtained by
+
+  amplitude_w = sqrt(c_w^2 + s_w^2)
+  phase_w = atan2(s_w, c_w)         (* 180 / pi to obtain degrees)
+
+You don't have to do corrections afterwards because the node and 
+equilibrium stuff is already in the input data.
+If all times t_i happen to fall within one year, then node_w() and
+equi_w() are constant and you get the same thing as before.
+
+
+Please contact me if you have any questions.
+Best regards,
+
+
+
+
+Bj"orn Brill <brill@fs.math.uni-frankfurt.de>
+Frankfurt am Main, Germany
+
+--42823772-501802275-941482049=:1546
+Content-Type: TEXT/PLAIN; NAME="leastsq.cc"
+Content-Transfer-Encoding: BASE64
+Content-ID: <Pine.LNX.4.05.9911011947290.1546@samson.math.uni-frankfurt.de>
+Content-Description: leastsq.cc
+Content-Disposition: ATTACHMENT; FILENAME="leastsq.cc"
+
+LyoNCiAqbGVhc3Qgc3F1YXJlcyBzb2x2ZXIgaW4gbWluaW1hbGlzdGljIEMr
+Kw0KICoNCiAqc29sdmUgfEEqeC15fF8yIG1pbmltYWwgZm9yIHggd2l0aCBB
+LCB5IGdpdmVuLg0KICoNCiAqQSBpcyBhIHJlYWwgKG0geCBuKS1NYXRyaXgg
+d2l0aCBtID49IG4sIHggaW4gUl5uLCB5IGluIFJebS4NCiAqDQogKldlIHJl
+YWxseSBzb2x2ZSB0cmFuc3Bvc2UoQSkqQSp4IC0gdHJhbnNwb3NlKEEpICog
+eSA9IDANCiAqKHRoaXMgaXMsIHVwIHRvIGEgZmFjdG9yIDIsIHRoZSBncmFk
+aWVudCBvZiB0aGUgZXhwcmVzc2lvbiB0byBtaW5pbWl6ZSkuDQogKg0KICpB
+biBhbHRlcm5hdGl2ZSB3b3VsZCBiZSB0byB1c2UgUVItZGVjb21wb3NpdGlv
+biBvZiBBLg0KICoNCiAqIENvcHlyaWdodCAoQykgMTk5OSBCavZybiBCcmls
+bC4NCiAqIEkgY2FuIGJlIHJlYWNoZWQgdmlhIGUtbWFpbCBhdCA8YnJpbGxA
+ZnMubWF0aC51bmktZnJhbmtmdXJ0LmRlPi4NCiAqIA0KICogVGhpcyBwcm9n
+cmFtIGlzIGRpc3RyaWJ1dGVkIFdJVEhPVVQgQU5ZIFdBUlJBTlRZLiBJdCBp
+cyBmcmVlIHNvZnR3YXJlLA0KICogeW91IGNhbiByZWRpc3RyaWJ1dGUgYW5k
+L29yIG1vZGlmeSBpdCB1bmRlciB0aGUgdGVybXMgb2YgdGhlDQogKiBHTlUg
+R2VuZXJhbCBQdWJsaWMgTGljZW5jZSAoR1BMKSBhcyBwdWJsaXNoZWQgYnkg
+dGhlDQogKiBGcmVlIFNvZnR3YXJlIEZvdW5kYXRpb247IGVpdGhlciB2ZXJz
+aW9uIDIgb2YgdGhlIExpY2Vuc2UsIG9yDQogKiAoYXQgeW91ciBvcHRpb24p
+IGFueSBsYXRlciB2ZXJzaW9uLg0KICoNCiAqIFRoZSBHUEwgY2FuIGJlIG9i
+dGFpbmVkIGZyb20gdGhlIEdOVSB3ZWJzaXRlIGF0DQogKiA8aHR0cDovL3d3
+dy5nbnUub3JnL2NvcHlsZWZ0L2dwbC5odG1sPiBvciBieSB3cml0aW5nIHRv
+DQogKiB0aGUgRnJlZSBTb2Z0d2FyZSBGb3VuZGF0aW9uLCBJbmMuLCA1OSBU
+ZW1wbGUgUGxhY2UgLSBTdWl0ZSAzMzAsDQogKiBCb3N0b24sIE1BIDAyMTEx
+LTEzMDcsIFVTQS4NCiAqLw0KDQojaW5jbHVkZSA8aW9zdHJlYW0uaD4NCiNp
+bmNsdWRlIDxtYXRoLmg+DQoNCiNpZmRlZiBERUJVRw0KI2RlZmluZSBkZWJ1
+Z19vdXQoeCkge2NlcnIgPDwgeDt9DQojZWxzZQ0KI2RlZmluZSBkZWJ1Z19v
+dXQoeCkNCiNlbmRpZg0KDQovL01hdHJpeCBpcyB2ZXJ5IHBvb3IuIEJhcmVs
+eSBkb2VzIHdoYXQgd2UgbmVlZCBpbiB0aGlzIHRpbnkgcHJvZ3JhbS4NCi8v
+QSBtb3JlIGdlbmVyYWwgaW1wbGVtZW50YXRpb24gc2hvdWxkIHByb2JhYmx5
+IHVzZSB2YWxhcnJheSBmcm9tIHRoZSBTVEwNCnN0cnVjdCBNYXRyaXggew0K
+ICAgIHNpemVfdCByb3dzOw0KICAgIHNpemVfdCBjb2xzOw0KICAgIGRvdWJs
+ZSogZW50cmllczsNCiAgICBkb3VibGUqKiByb3dwczsgLy9OT1Qgc3VwcG9z
+ZWQgdG8gYmUgY29uc3RhbnQgYWZ0ZXIgaW5pdGlhbGl6YXRpb24hDQogICAg
+DQogICAgTWF0cml4KHNpemVfdCBtLCBzaXplX3Qgbik7DQogICAgfk1hdHJp
+eCgpOw0KICAgIGRvdWJsZSogb3BlcmF0b3JbXShzaXplX3QgaSkgY29uc3Qg
+ew0KICAgIAlyZXR1cm4gcm93cHNbaV07DQogICAgfTsNCiAgICB2b2lkIHhj
+aGdSb3dzKHNpemVfdCBpLCBzaXplX3Qgaikgew0KICAgIAlkb3VibGUqIGIg
+PSByb3dwc1tpXTsNCglyb3dwc1tpXSA9IHJvd3BzW2pdOw0KCXJvd3BzW2pd
+ID0gYjsNCiAgICB9Ow0KfTsNCg0KTWF0cml4OjpNYXRyaXgoc2l6ZV90IG0s
+IHNpemVfdCBuKSB7DQogICAgcm93cyA9IG07DQogICAgY29scyA9IG47DQog
+ICAgZW50cmllcyA9IG5ldyBkb3VibGVbcm93cyAqIGNvbHNdOw0KICAgIHJv
+d3BzID0gbmV3IGRvdWJsZSpbcm93c107DQogICAgDQogICAgZG91YmxlKiBw
+ID0gZW50cmllczsNCiAgICBmb3Ioc2l6ZV90IGkgPSAwOyBpIDwgcm93czsg
+KytpKSB7DQogICAgCXJvd3BzW2ldID0gcDsNCglwICs9IGNvbHM7DQogICAg
+fTsNCn07DQoNCk1hdHJpeDo6fk1hdHJpeCgpIHsNCiAgICBkZWxldGVbXSBy
+b3dwczsNCiAgICBkZWxldGVbXSBlbnRyaWVzOw0KfTsNCg0KYm9vbCBnYXVz
+c0VsaW0oTWF0cml4KiBDKTsNCmRvdWJsZSBzdW0oZG91YmxlKiBzdW1tYW5k
+cywgc2l6ZV90IHMpOw0KDQppbnQgbWFpbigpIHsNCiAgICBzaXplX3QgbSwg
+bjsNCiAgICBzaXplX3QgaSwgaiwgazsNCiAgICANCiAgICBjaW4gPj4gbSA+
+PiBuOw0KICAgIGlmKG0gPCAxKSB7DQogICAgCWNlcnIgPDwgIm0gbXVzdCBi
+ZSBhIHBvc2l0aXZlIGludGVnZXIsIG5vdCAiIDw8IG0gPDwgIi5cbiI7DQog
+ICAgCWV4aXQoMSk7DQogICAgfTsNCiAgICBpZihuIDwgMSkgew0KICAgIAlj
+ZXJyIDw8ICJuIG11c3QgYmUgYSBwb3NpdGl2ZSBpbnRlZ2VyLCBub3QgIiA8
+PCBuIDw8ICIuXG4iOw0KICAgIAlleGl0KDEpOw0KICAgIH07DQogICAgaWYo
+bSA8IG4pIHsNCiAgICAJY2VyciA8PCAibSBtdXN0IGJlID49IG4sIGJ1dCB5
+b3Ugc2FpZCAiOw0KCWNlcnIgPDwgIm09IiA8PCBtIDw8ICIgbj0iIDw8IG4g
+PDwgIi5cbiI7DQogICAgCWV4aXQoMSk7DQogICAgfTsNCiAgICBkZWJ1Z19v
+dXQoIm0sbiBPS1xuIik7DQogICAgDQogICAgLyoNCiAgICAgKiBUaGUgZXh0
+ZW5kZWQgY29lZmZpY2llbnQgbWF0cml4IG9mIHRoZSBzeXN0ZW0gdG8gc29s
+dmUgaXMNCiAgICAgKiBDIDo9IHRyYW5zcG9zZShBKSooQXx5KS4gV2UgZGly
+ZWN0bHkgc3RvcmUgQWV5IDo9IEF8eS4NCiAgICAgKi8NCiAgICBNYXRyaXgg
+QWV5KG0sIG4rMSk7DQogICAgTWF0cml4IEMobiwgbisxKTsNCg0KICAgIC8v
+cmVhZCBBIA0KICAgIGZvcihpID0gMDsgaSA8IG07ICsraSkgew0KICAgIAlm
+b3IoaiA9IDA7IGogPCBuOyArK2opIHsNCgkgICAgY2luID4+IEFleVtpXVtq
+XTsNCgl9Ow0KICAgIH07DQogICAgZGVidWdfb3V0KCJBIE9LXG4iKTsNCiAg
+ICANCiAgICAvL3JlYWQgeQ0KICAgIGZvcihpID0gMDsgaSA8IG07ICsraSkg
+ew0KICAgIAljaW4gPj4gQWV5W2ldW25dOw0KICAgIH07DQogICAgZGVidWdf
+b3V0KCJ5IE9LXG4iKTsNCiAgICANCiAgICAvL2NvbXB1dGUgQw0KICAgIC8v
+V2UgdXNlIHRoZSBmYWN0IHRoYXQgdGhlIHNxdWFyZSBwYXJ0IG9mIEMgaXMg
+c3ltbWV0cmljIHRvIHNhdmUgY3B1Lg0KICAgIGRvdWJsZSogc3VtbWFuZHMg
+PSBuZXcgZG91YmxlW21dOw0KICAgIGRvdWJsZSBkOw0KICAgIGZvcihpID0g
+MDsgaSA8IG47IGkrKykgew0KICAgIAlmb3IoayA9IGk7IGsgPCBuKzE7IGsr
+Kykgew0KCSAgICBmb3IoaiA9IDA7IGogPCBtOyBqKyspIHsNCgkJc3VtbWFu
+ZHNbal0gPSBBZXlbal1baV0gKiBBZXlbal1ba107DQoJICAgIH07DQoJICAg
+IGQgPSBzdW0oc3VtbWFuZHMsIG0pOw0KCSAgICBDW2ldW2tdID0gZDsNCgkg
+ICAgaWYoayA8IG4pIENba11baV0gPSBkOw0KCX07DQogICAgfTsNCiAgICBk
+ZWJ1Z19vdXQoIkMgY29tcHV0ZWRcbiIpOw0KICAgIA0KICAgIC8vYW5kIHNv
+bHZlIGl0DQogICAgaWYoIWdhdXNzRWxpbSgmQykpIHsNCiAgICAJY2VyciA8
+PCAiVGhpcyBwcm9ibGVtIGlzIG51bWVyaWNhbGx5IGlsbC1jb25kaXRpb25l
+ZCAiOw0KCWNlcnIgPDwgIm9yIHRoZSBtYXRyaXggZG9lc24ndCBoYXZlIG1h
+eGltYWwgcmFuay5cbiI7DQoJZXhpdCgxKTsNCiAgICB9Ow0KICAgIGRlYnVn
+X291dCgiQyBzb2x2ZWRcbiIpOw0KICAgIA0KICAgIC8vcHJpbnQgc29sdXRp
+b24geA0KICAgIGZvcihpID0gMDsgaSA8IG47ICsraSkgew0KICAgIAljb3V0
+IDw8IENbaV1bbl0gPDwgIiAiOw0KICAgIH07DQogICAgY291dCA8PCAiXG4i
+Ow0KICAgIA0KICAgIC8vY29tcHV0ZSBBKngNCiAgICBkb3VibGUqIEF4ID0g
+bmV3IGRvdWJsZVttXTsNCiAgICBmb3IoaSA9IDA7IGkgPCBtOyArK2kpIHsN
+CiAgICAJZm9yKGogPSAwOyBqIDwgbjsgKytqKSB7DQoJICAgIHN1bW1hbmRz
+W2pdID0gQWV5W2ldW2pdICogQ1tqXVtuXTsNCgl9Ow0KCUF4W2ldID0gc3Vt
+KHN1bW1hbmRzLCBuKTsNCiAgICB9Ow0KDQogICAgLy9wcmludCByZXNpZHVl
+IHZlY3RvciBhbmQgbm9ybQ0KICAgIGRvdWJsZSByLCBzOw0KICAgIHMgPSAw
+Ow0KICAgIGZvcihpID0gMDsgaSA8IG07ICsraSkgew0KICAgIAlyID0gQXhb
+aV0gLSBBZXlbaV1bbl07DQoJY291dCA8PCByIDw8ICIgIjsNCglzdW1tYW5k
+c1tpXSA9IHIqcjsNCiAgICB9Ow0KICAgIGNvdXQgPDwgIlxuIiA8PCBzcXJ0
+KHN1bShzdW1tYW5kcywgbSkpIDw8ICJcbiI7DQoNCiAgICBkZWxldGVbXSBB
+eDsNCiAgICBkZWxldGVbXSBzdW1tYW5kczsNCn07DQoNCmJvb2wgZ2F1c3NF
+bGltKE1hdHJpeCogQykgew0KICAgIC8qDQogICAgICogU29sdmUgYSBzeXN0
+ZW0gb2YgbGluZWFyIGVxdWF0aW9ucyBieSBHYXVzcyBFbGltaW5hdGlvbi4N
+CiAgICAgKg0KICAgICAqIFdlIGFzc3VtZSBDIGlzIG9mIHRoZSBmb3JtIFMg
+fCB5XzEgfCB5XzIgfCAuLi4gd2l0aCBTIHNxdWFyZSBhbmQgcmVndWxhcg0K
+ICAgICAqIGFuZCBjb2x1bW4gdmVjdG9ycyB5XzEsIHlfMiwgLi4uDQogICAg
+ICogaS5lLiB3ZSBzaW11bHRhbmVvdXNseSBzb2x2ZSBTKnhfMSA9IHlfMSwg
+Uyp4XzIgPSB5XzIsIC4uLg0KICAgICAqIGJ5IHRyYW5zZm9ybWluZyB0aGUg
+UyBwYXJ0IG9mIEMgaW50byB0aGUgaWRlbnRpdHkgbWF0cml4IHdpdGgNCiAg
+ICAgKiByb3cgb3BlcmF0aW9ucyAoc2ltdWx0YW5lb3VzIHNvbHV0aW9ucyBu
+b3QgcmVxdWlyZWQgZm9yIHRoaXMgcHJvZ3JhbSwNCiAgICAgKiBidXQgdGhl
+IHNhbWUgYWxnb3JpdGhtIHRoYXQgc29sdmVzIG9uZSBlcXVhdGlvbiBzaW11
+bHRhbmVvdXNseSBzb2x2ZXMNCiAgICAgKiBzZXZlcmFsIGF0IG1pbmltYWwg
+ZXh0cmEgY29zdCA6LSkNCiAgICAgKg0KICAgICAqIFRoZSB0cmFuc2Zvcm1h
+dGlvbnMgYXJlIHBlcmZvcm1lZCBpbiBwbGFjZSAodGhpcyBtb2RpZmllcyBD
+ISkgYW5kDQogICAgICogdGhlIHNvbHV0aW9ucyB4X2kgY2FuIGJlIHJlYWQg
+ZnJvbSB3aGVyZSB0aGUgeV9pIGhhdmUgYmVlbi4NCiAgICAgKg0KICAgICAq
+IFJldHVybnMgdHJ1ZSBvbiBzdWNjZXNzLCBmYWxzZSBpZiB3ZSBydW4gaW50
+byBudW1lcmljYWwgb3IgcmFuayBwcm9ibGVtcy4NCiAgICAgKi8NCiAgICAN
+CiAgICBzaXplX3QgaSwgaiwgazsNCiAgICBzaXplX3QgdXNlcm93Ow0KICAg
+IGRvdWJsZSBwaXZvdCwgcm93b3A7DQogICAgY29uc3QgZG91YmxlIGRlbHRh
+ID0gMWUtMTQ7DQogICAgCS8qDQogICAgIAkgKiB3ZSBzdG9wIGlmIHdlJ2Qg
+aGF2ZSB0byBkaXZpZGUgYnkgZW50cmllcyB3aXRoIGFic29sdXRlIHZhbHVl
+DQoJICogc21hbGxlciB0aGFuIGRlbHRhLiBJdCB3b3VsZCBwZXJoYXBzIGJl
+IGJldHRlciB0byBjb25zdHJ1Y3QgZGVsdGENCgkgKiBmcm9tIHZhbHVlcyBm
+b3VuZCBpbiBTVExzIDxsaW1pdHM+LCBlLmcuDQoJICogZGVsdGEgPSBudW1l
+cmljX2xpbWl0czxkb3VibGU+OjplcHNpbG9uKCkgW2NvbnNlcnZhdGl2ZSBz
+dHlsZV0gb3INCgkgKiBkZWx0YSA9IG51bWVyaWNfbGltaXRzPGRvdWJsZT46
+Om1pbigpIFthdCBsZWFzdCBwcmV2ZW50IGRpdmlzaW9uDQoJICogYnkgZGVu
+b3JtYWxpemVkIG51bWJlcnNdDQogICAgCSAqLw0KICAgIGlmKEMtPmNvbHMg
+PD0gQy0+cm93cykgew0KICAgIAljZXJyIDw8ICJnYXVzc0VsaW06IGNhbm5v
+dCBoYW5kbGUgYSAiIDw8IEMtPnJvd3MgPDwgIngiIDw8IEMtPmNvbHM7DQoJ
+Y2VyciA8PCAiIG1hdHJpeC4gTmVlZCAjcm93cyA8ICNjb2x1bW5zLlxuIjsN
+CglyZXR1cm4oZmFsc2UpOw0KICAgIH07DQogICAgDQogICAgLy9icmluZyBT
+IHBhcnQgaW50byBkaWFnb25hbCBmb3JtDQogICAgZm9yKGkgPSAwOyBpIDwg
+Qy0+cm93czsgKytpKSB7DQogICAgDQogICAgCS8vZm9yIGJldHRlciBudW1l
+cmljYWwgcXVhbGl0eSwgZG8gcGFydGlhbCBwaXZvdGluZw0KICAgIAl1c2Vy
+b3cgPSBpOw0KCXBpdm90ID0gKCpDKVtpXVtpXTsNCglmb3IoayA9IGkrMTsg
+ayA8IEMtPnJvd3M7ICsraykgew0KCSAgICBpZihmYWJzKCgqQylba11baV0p
+ID4gZmFicyhwaXZvdCkpIHsNCgkgICAgCXVzZXJvdyA9IGs7DQoJCXBpdm90
+ID0gKCpDKVtrXVtpXTsNCgkgICAgfTsNCgl9Ow0KCWlmKGZhYnMocGl2b3Qp
+IDwgZGVsdGEpIHsNCgkgICAgcmV0dXJuKGZhbHNlKTsNCgl9Ow0KCUMtPnhj
+aGdSb3dzKGksIHVzZXJvdyk7DQoJDQoJLy96ZXJvIG91dCB0aGUgaS10aCBj
+b2x1bW4NCglmb3IoayA9IDA7IGsgPCBDLT5yb3dzOyArK2spIHsNCgkgICAg
+aWYoayA9PSBpKSBjb250aW51ZTsNCgkgICAgcm93b3AgPSAtICgqQylba11b
+aV0vcGl2b3Q7DQoJICAgICgqQylba11baV0gPSAwLjA7DQoJICAgIGZvcihq
+ID0gaSsxOyBqIDwgQy0+Y29sczsgKytqKSB7DQoJICAgIAkoKkMpW2tdW2pd
+ICs9IHJvd29wICogKCpDKVtpXVtqXTsNCgkgICAgfTsNCgl9Ow0KCQ0KICAg
+IH07DQogICAgDQogICAgLy9ub3JtYWxpemUgZGlhZ29uYWwgZW50cmllcyB0
+byAxIChiZXR0ZXIgdG8gZG8gdGhpcyBhdCB0aGUgZW5kIC0tIHNhdmVzDQog
+ICAgLy90aW1lIHNpbmNlIG1vc3Qgb2YgQyBpcyBub3cgemVybyBhbnl3YXkg
+YW5kIGF2b2lkcyBsb29zaW5nIHByZWNpc2lvbg0KICAgIC8vd2hpbGUgd2Ug
+c3RpbGwgaXRlcmF0ZSBvdmVyIHRoZSBkYXRhKQ0KICAgIGZvcihpID0gMDsg
+aSA8IEMtPnJvd3M7ICsraSkgew0KICAgIAlwaXZvdCA9ICgqQylbaV1baV07
+IC8vc2FtZSBhcyBiZWZvcmUNCgkoKkMpW2ldW2ldID0gMS4wOw0KCWZvcihq
+ID0gQy0+cm93czsgaiA8IEMtPmNvbHM7ICsraikgew0KCSAgICAoKkMpW2ld
+W2pdIC89IHBpdm90Ow0KCX07DQogICAgfTsNCiAgICANCiAgICByZXR1cm4o
+dHJ1ZSk7DQp9Ow0KDQpkb3VibGUgc3VtKGRvdWJsZSogc3VtbWFuZHMsIHNp
+emVfdCBzKSB7DQogICAgLyoNCiAgICAgKiBTdW0gdXAgYW4gYXJyYXkgb2Yg
+cyBkb3VibGVzLiBTdW1tYXRpb24gaXMgZG9uZSAiZGl2aWRlIGFuZCBjb25x
+dWVyIg0KICAgICAqIHRvIG1pbmltaXplIGxvc3Mgb2YgcHJlY2lzaW9uIHdp
+dGggbGFyZ2UgYXJyYXlzLg0KICAgICAqLw0KICAgIHN3aXRjaChzKSB7DQog
+ICAgCWNhc2UgMjogcmV0dXJuKHN1bW1hbmRzWzBdICsgc3VtbWFuZHNbMV0p
+Ow0KICAgIAljYXNlIDE6CXJldHVybihzdW1tYW5kc1swXSk7DQoJY2FzZSAw
+OiByZXR1cm4oMCk7DQogICAgCWRlZmF1bHQ6IHsNCiAgICAJICAgIGludCBz
+cGxpdCA9IHMvMjsNCiAgICAJICAgIHJldHVybihzdW0oc3VtbWFuZHMsIHNw
+bGl0KSArIHN1bShzdW1tYW5kcyArIHNwbGl0LCBzIC0gc3BsaXQpKTsNCgl9
+Ow0KICAgIH07DQp9Ow0K
+--42823772-501802275-941482049=:1546--
+

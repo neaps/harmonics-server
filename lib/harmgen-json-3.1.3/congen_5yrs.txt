@@ -1,0 +1,504 @@
+# $Id: congen_5yrs.txt 6754 2018-01-15 14:43:55Z flaterco $
+#
+# congen_9yrs.txt was derived from congen_input.txt rev. 2018-01-14 by
+# commenting out constituents that had exactly or almost exactly the same
+# speed as previous ones.  congen_5yrs.txt and congen_1yr.txt were in turn
+# derived from congen_9yrs.txt by commenting out constituents that were
+# different yet still too close in speed to be separated by analyses using
+# shorter time serieses.
+#
+#
+# Format of input:
+#   For basic constituents:
+#     name  Basic      T  s  h  p  p1 c  xi v vp dvpp Q R f#
+#   For compound constituents (trailing zeroes are optional):
+#     name  Compound   O1 K1 P1 M2 S2 N2 L2 K2 Q1 NU2 S1 M1-DUTCH LDA2
+#   For comment lines:
+#     # blah blah blah
+#   For approximated Doodson constituents:
+#     name  Doodson    T  s  h  p  p1 c   numsatellites
+#         ... followed by IOS style satellite records ...
+#
+# Overview
+# --------
+#
+# Congen and the congen_input.txt file were designed originally to
+# implement the system used by the US National Ocean Service (NOS), aka the
+# Darwin system.  Support for Doodson-style constituents as used by Mike
+# Foreman's original IOS package is only approximate; most importantly,
+# latitude-dependent satellites are discarded.  The International
+# Hydrographic Organization (IHO) has yet another way of calculating node
+# factors which is not supported at all.
+#
+# The first 37 constituents in this file are those that the NOS
+# historically used for most stations, with names as they appeared in Ed
+# Wallner's TIDES4 program and in the original IOS tidal package.  After
+# that, constituents were simply appended if and when they were needed to
+# make use of data from disparate sources, with names either as appearing
+# therein or as previously defined herein.  Those seeking a more cohesive
+# list of constituents with some logical ordering might consult one of the
+# following sources:
+#
+#   [IHO] "Standard list of tidal constituents" from the Tide, Water Level
+#   and Current Working Group (TWCWG) of the IHO, rev. 2017-05, lists many
+#   constituents ordered by speed along with their Extended Doodson Numbers
+#   (XDO).
+#
+#   [SP98] Manual of Harmonic Analysis and Prediction of Tides.  Special
+#   Publication No. 98, Revised (1940) Edition (reprinted 1958 with
+#   corrections; reprinted again 1994).  Table 2 summarizes all of the
+#   constituents used in SP98.
+#
+#   NOAA Technical Memorandum NOS CO-OPS 0021, "Tidal current analysis
+#   procedures and associated computer programs," 1999-03, contains a table
+#   of 175 constituents "in standard order," but the standard is not
+#   identified.
+#
+# For details of Congen operation please consult the README file.
+#
+# Nomenclature
+# ------------
+#
+# Most constituents end with a digit that indicates their species (number
+# of cycles per day), which also is the coefficient of T.  The exceptions
+# are:
+#
+# - In this file we add a hyphen and a suffix to distinguish conflicting
+#   definitions with the same name, such as OQ2 and OQ2-HORN.
+#
+# - Table 2 in SP98 assigns a serial reference number of the form ANN or
+#   BNN to many constituents that do not have assigned symbols.  In the
+#   absence of another name, these reference numbers get used.
+#
+# - H1 is an alias for ALP2 and has T=2.
+#
+# Changes (2018-01)
+# -----------------
+#
+# There were no changes to congen_input.txt between August 2004 and January
+# 2018.  The purpose of the 2018-01 revision is to incorporate the findings
+# of an investigation into discrepant constituents in National Ocean
+# Service data which specifically affect station 9455920, Anchorage,
+# Alaska.
+#
+# The definition of constituent 3KM5 has been changed from 3K1+M2 to
+# K1+M2+K2.  This approximately reverses its phase and alters its node
+# factors.  Although the superseded definition was consistent with IHO
+# (2017), the new definition is the one that was used in the paper that
+# introduced the use of many constituents for Anchorage (Bernard D. Zetler
+# and Robert A. Cummings, A harmonic method for predicting shallow-water
+# tides, J. Marine Res. 25(1), pp. 103-114, 1967) and is also the one used
+# by IOS (2006).
+#
+# The new constituent KJ2-IHO is simply a phase reversal of the SP98
+# definition of KJ2 to make it consistent with IHO and the NOS data for
+# Anchorage.  As defined in this file, KJ2 and ETA2 are two different
+# formulations of what IHO and IOS call ETA2.  KJ2 is one of the
+# constituents that is inferred by libtcd using an SP98 rule-of-thumb which
+# assumes a consistent treatment of the constituents' phases; flipping KJ2
+# from its SP98 definition would be more likely to break this inference
+# than to fix it.
+#
+# A third discrepancy was resolved without changes to this file.  The
+# definitions of RP1 and PSI1 (which are the same thing but flipped 180
+# degrees) are consistent with IHO, with the SP98 definition of PSI1, and
+# with the IOS definition of PSI1.  To reduce error for Anchorage, the RP1
+# constituent is just mapped to PSI1 by the import program of Harmbase2.
+#
+# Quirks in SP98 and the NOS system
+# ---------------------------------
+#
+# NOS node factors for M1 contain a historical error that make them about
+# 50% greater than they should be.  M1 amplitudes in harmonic constants
+# from NOS are correspondingly smaller to compensate.
+#
+# M1 has two formulas in SP 98 Table 2.  The first yields the correct speed
+# for the constituent, while the second yields the correct equilibrium
+# arguments (SP 98 p. 42).  The correct thing to do *here* is to use the
+# second formula since Congen automatically compensates the speed when the
+# Q variable gets a nonzero multiplier.
+#   M1  Basic  1 -1 1 0 0 -90    1 -1 0 0 1 0     206
+#   Speed = 14.4966939
+#
+# About M1 Wallner wrote:
+#   In SP98, "Manual of Harmonic Analysis and Prediction of Tides" two
+#   approaches are given for M1, which is a combination of two terms in
+#   Darwin's theory, A16 and A23. (Why wasn't A71 included in the
+#   combination? It is labelled (M1) in Table 2, its speed is half that of
+#   M2 and its coefficient is larger than that of A16 or A23!!)
+#
+#   V0 for the first  is T -s +h +p -90° and u is    -nu -Qu.
+#   V0 for the second is T -s +h    -90° and u is xi -nu +Q.
+#
+#   The terms Qu and Q are such that the equilibrium arguments at the start
+#   of the prediction interval are the same but the variable p is absorbed
+#   in Q in the second method and held fixed for the interval. Not only are
+#   there two approaches, alternate formulas are given for some equations
+#   in which some elements are replaced by their mean values. The tables in
+#   SP98 use these approximations.
+#
+# MSF or MSf is not derived using the formula in Table 2 but is actually SM
+# (S2-M2); see SP98 p. 48.  This causes u to be nonzero.
+#
+# KJ2 is phase-reversed from its IHO definition and matches IHO's ETA2 at
+# least as far as speed and equilibrium arguments.  The IOS ETA2 is a close
+# match.
+#
+# OO2 appears to be a mistranscription of OQ2, specifically the one that
+# herein is defined as OQ2-HORN.
+#
+# Aliases and conflicts
+# ---------------------
+#
+# The "Explanation of symbols used in this book" at the end of SP98
+# contains several statements to the effect that one constituent is the
+# same as another:
+#
+#         Claim                IHO list              congen_input.txt
+#   Theta1 = LambdaO1   Opposite phase, nodes j, x   No LambdaO1
+#   Mu2 = 2MS2          Agree? nodes m, x            No 2MS2
+#   Pi1 = TK1           Agree? nodes z, x            Eq args and nodes differ
+#   Rho1 = NuK1         Agree? nodes o, x            No NuK1
+#   Sigma1 = NuJ1       Agree!                       No NuJ1
+#   Phi1 = KP1          Agree? nodes j, x            Eq args and nodes differ
+#   Chi1 = LP1          Opposite phase, nodes j, x   No LP1
+#   Psi1 = RP1          Opposite phase, nodes z, x   Opposite phase
+#
+# (I have not computed the IHO nodal corrections to determine in which
+# cases the two letters quoted above indicate the same result.)
+#
+# Constituent names are unreliable identifiers.  The IHO list contains
+# enough examples where the same name has multiple, conflicting
+# definitions.  Data sets may use idiosyncratic constituents or just
+# idiosyncratic names for already-defined constituents.
+#
+# Sequences of letters get permuted, such as 3MSN10 in lieu of 3MNS10.
+#
+# The reduction of Greek letters to flat ASCII is arbitrary and prone to
+# aliasing.  NU and V get interchanged a lot.
+#
+# H1 is an alias for ALP2; H2 is an alias for BET2.
+#
+# The Canadian and NOS systems have some subtle differences and some not so
+# subtle.  Constituents SA-IOS, MF-IOS, S1-IOS, OO1-IOS, and R2-IOS
+# approximate Canadian definitions that clash with NOS definitions having
+# the same name.
+#
+# As defined in this file, some pairs of constituents appear to be Darwin
+# and Doodson formulations of the same underlying constituent or very
+# similar constituents.  The different formulations produce differences in
+# equilibrium arguments and node factors which may be genuine or may be
+# artifacts of the latitude-dependent satellites being discarded by Congen.
+#
+#   MNS2 and EPS2      IHO: nodes x, m
+#   KQ1 and UPS1       IHO: nodes x, d
+#
+# BET1 may match the unused A19 constituent in SP98 Table 2.
+#
+# The IHO list has two definitions of MP1 and one of TAU1 that all have the
+# same speed.  As defined in this file, MP1 and TAU1 have significantly
+# different equilibrium arguments and node factors.
+#
+# Speed collisions between different compound constituents are not so rare;
+# quite a few exist in this file.  Sometimes they are approximately
+# equivalent and sometimes they are not.
+#
+# Other definitions of M1 / NO1
+# -----------------------------
+#
+# Canada uses NO1 = N2 - O1.  They don't use a constituent named M1.
+#
+# Regarding Japan's M1, Wallner wrote (1997):
+#   The text with the Japanese constituents I got a little over two year
+#   ago gives the argument of M1 as T - s + h - 90 as in the second NOS
+#   definition.  The node factor f and phase u are defined by:
+#     f cos(u) = 2 * cos(p) + 0.4 cos(p-N)
+#     f sin(u) =     sin(p) + 0.2 sin(p-N)
+#   This gives essentially the NOS values.
+#
+# Upon further review in year 2000, Wallner wrote:
+#   The Japanese u and f are reasonably close to the second SP98
+#   formulation.  The Japanese constituent phases could be "corrected" to
+#   work with first formulation in TIDES by subtracting p, but since this
+#   is a variable that's not much help.  Considering it a new constituent,
+#   or a different version of M1, would work better.  The German M1 has the
+#   right speed, half that of M2, but I'm not sure what u and f are for it.
+#   The IHO data set has both M1 and NO1, but again I'm not sure what their
+#   M1 is.  The French M1 appears to be NO1 exactly.  The Mexican data I
+#   have include another undefined M1.
+#
+# Regarding Horn's publications, which have M1 = A71 but also NO1, Casement
+# wrote:
+#   I can't agree with his notation here.  What he calls NO1 is a
+#   lunisolar tide and would be better called M1 - as it is by other
+#   authors.  His M1 is in fact a shallow-water tide (= M3 - M2 +
+#   180°) and would be better called MM1.
+#
+# The Dutch define the following constituents:
+#   M1  = SP98 term M1 formula #1 on p. 165 (I have called this M1-DUTCH)
+#   M1A = SP98 term A23
+#   M1B = SP98 term A16
+#   M1C = SP98 term A71
+#   M1D = SP98 term M1 formula #2 on p. 165
+# M1A, M1B, and M1D are not used in the data I have received.  M1C is.
+# M1-DUTCH is used indirectly in the building of M7 (complete with
+# exaggerated node factors).  The IOS formulation of M7 is 3.5 * M2!
+#
+# M1 is a minor constituent that doesn't deserve to be such an
+# inconvenience.  Future producers of harmonic constants are advised to
+# abolish M1 and just use NO1.
+#
+# Other "problem" constituents
+# ----------------------------
+#
+# Constituent OQ2 has been defined as
+# - O1+Q1 (herein called OQ2-HORN, used by Netherlands)
+# - Ibid. with a 180 degree shift (not included here)
+# - A different definition used by Canada/IOS (herein called OQ2).
+# Only the first two appear in the IHO list.
+#
+# Mexican data contain A7 and LDA1.  Wallner wrote:
+#   The data set in the Anales del Instituto d Geofisica, v14 pp45-69
+#   (1969) give 47 constituents for 23 stations. There is no LDA1 but both
+#   A4 and A7 are included. These are presumably are those terms in Table 2
+#   of SP98, which is one of the references in the article. My marginalia
+#   say A4 = MsM and A7 = Mtm.
+#
+# ----------------------------------------------------------------------
+#
+# The historical 37 NOS constituents.
+#
+J1    Basic  1 1 1 -1 0 -90    0 -1 0 0 0 0     76
+K1    Compound  0 1 0 0 0 0 0 0
+K2    Compound  0 0 0 0 0 0 0 1
+L2    Compound  0 0 0 0 0 0 1 0
+# M1 is damaged; prefer NO1.
+# M1    Basic  1 -1 1 0 0 -90    1 -1 0 0 1 0     206
+M2    Compound  0 0 0 1 0 0 0 0
+M3    Basic  3 -3 3 0 0 0      3 -3 0 0 0 0     149
+M4    Compound  0 0 0 2 0 0 0 0
+M6    Compound  0 0 0 3 0 0 0 0
+M8    Compound  0 0 0 4 0 0 0 0
+N2    Compound  0 0 0 0 0 1 0 0
+2N2   Basic  2 -4 2 2 0 0      2 -2 0 0 0 0     78
+O1    Compound  1 0 0 0 0 0 0 0
+OO1   Basic  1 2 1 0 0 -90     -2 -1 0 0 0 0    77
+P1    Compound  0 0 1 0 0 0 0 0
+Q1    Compound  0 0 0 0 0 0 0 0 1
+2Q1   Basic  1 -4 1 2 0 90     2 -1 0 0 0 0     75
+R2    Basic  2 0 1 0 -1 180    0 0 0 0 0 0      1
+S1    Basic  1 0 0 0 0 0       0 0 0 0 0 0      1
+S2    Compound  0 0 0 0 1 0 0 0
+S4    Compound  0 0 0 0 2 0 0 0
+S6    Compound  0 0 0 0 3 0 0 0
+T2    Basic  2 0 -1 0 1 0      0 0 0 0 0 0      1
+LDA2  Basic  2 -1 0 1 0 180    2 -2 0 0 0 0     78
+MU2   Basic  2 -4 4 0 0 0      2 -2 0 0 0 0     78
+NU2   Basic  2 -3 4 -1 0 0     2 -2 0 0 0 0     78
+RHO1  Basic  1 -3 3 -1 0 90    2 -1 0 0 0 0     75
+MK3   Compound  0 1 0 1 0 0 0 0
+2MK3  Compound  0 -1 0 2 0 0 0 0
+MN4   Compound  0 0 0 1 0 1 0 0
+MS4   Compound  0 0 0 1 1 0 0 0
+2SM2  Compound  0 0 0 -1 2 0 0 0
+MF    Basic  0 2 0 0 0 0       -2 0 0 0 0 0     74
+MSF   Compound  0 0 0 -1 1 0 0 0
+MM    Basic  0 1 0 -1 0 0      0 0 0 0 0 0      73
+SA    Basic  0 0 1 0 0 0       0 0 0 0 0 0      1
+SSA   Basic  0 0 2 0 0 0       0 0 0 0 0 0      1
+#
+# IOS clashes with NOS
+#
+# SA-IOS  Doodson  0 0 1 0 -1 0    0
+# MF-IOS  Doodson   0 2 0 0  0 0    0
+# S1-IOS  Doodson   1 0 0 0 1 -90   2
+#            0  0 -2 .0  0.3534     0  1  0 .50 0.0264
+# OO1-IOS Doodson   1  2  1  0  0 -90    8
+#             -2 -1  0 .50 0.0037    -2  0  0 .0  0.1496    -2  1  0 .0  0.0296
+#             -1  0  0 .25 0.0240R1  -1  1  0 .25 0.0099R1   0  1  0 .0  0.6398
+#              0  2  0 .0  0.1342     0  3  0 .0  0.0086
+# R2-IOS  Doodson   2 0 1 0 -1 180    2
+#              0  0  2 .50 0.2535     0  1  2 .0  0.0141
+#
+# Unusual constituents used in Mexican data
+#
+A7   Basic  0 3 0 -1 0 0      -2 0 0 0 0 0     74
+# I guessed LambdaO1 (LDA2 - O1), which makes no sense in context
+# LDA1 Compound -1 0 0 0 0 0 0 0 0 0 0 0 1
+#
+#
+# Constituents added during the "harmonic convergence" when untraceable
+# numbers in harmonics.canadian and harmonics.japan were replaced by Congen
+# output.  Descriptions of anomalies found during this process can be found
+# in the August 2004 version of congen_input.txt.  There were several
+# phase-reversals and several surprising substitutions, all of which now are
+# moot.
+#
+2MK5    Compound      0  1  0  2  0  0  0  0
+2MK6    Compound      0  0  0  2  0  0  0  1
+# 2MN2    Compound      0  0  0  2  0 -1  0  0
+2MN6    Compound      0  0  0  2  0  1  0  0
+2MS6    Compound      0  0  0  2  1  0  0  0
+2NM6    Compound      0  0  0  1  0  2  0  0
+2SK5    Compound      0  1  0  0  2  0  0  0
+2SM6    Compound      0  0  0  1  2  0  0  0
+3MK7    Compound      0  1  0  3  0  0  0  0
+3MN8    Compound      0  0  0  3  0  1  0  0
+3MS2    Compound      0  0  0  3 -2  0  0  0
+3MS4    Compound      0  0  0  3 -1  0  0  0
+3MS8    Compound      0  0  0  3  1  0  0  0
+ALP1  Doodson  1 -5 3 1 0 90     2
+            -1  0  0 .75 0.0360R1   0 -1  0 .00 0.1906
+BET1  Doodson  1 -1 -1 1 0 -90   1
+             0 -1  0 .00 0.2266
+CHI1  Basic  1 -1 3 -1 0 -90   0 -1 0 0 0 0     76
+# H1    Doodson  2 -2 1 0 1 180    2
+#              0 -1  0 .50 0.0224     1  0 -1 .50 0.0447
+# H2    Doodson  2 -2 3 0 -1 0     1
+#              0 -1  0 .50 0.0217
+KJ2   Basic  2 1 2 -1 0 0      0 -2 0 0 0 0     79
+# ETA2  Doodson  2 1 2 -1 0 0      7
+#              0 -1  0 .50 0.0187     0  1  0 .0  0.4355     0  2  0 .0  0.0467
+#              1  0  0 .75 0.0747R2   1  1  0 .75 0.0482R2   1  2  0 .75 0.0093R2
+#              2  0  0 .50 0.0078
+KQ1   Basic  1 3 1 -1 0 -90    -2 -1 0 0 0 0    77
+# UPS1  Doodson  1 3 1 -1 0 -90    5
+#             -2  0  0 .00 0.0611     0  1  0 .00 0.6399     0  2  0 .00 0.1318
+#              1  0  0 .25 0.0289R1   1  1  0 .25 0.0257R1
+M10   Compound 0 0 0 5 0 0 0 0
+M12   Compound 0 0 0 6 0 0 0 0
+MK4   Compound       0  0  0  1  0  0  0  1
+MKS2  Compound       0  0  0  1 -1  0  0  1
+MNS2  Compound       0  0  0  1 -1  1  0  0
+# EPS2  Doodson   2 -5 4 1 0 0   3
+#             -1 -1  0 .25 0.0075R2  -1  0  0 .25 0.0402R2   0 -1  0 .50 0.0373
+# MO3   Compound 1 0 0 1 0 0 0 0
+MP1   Basic  1 -2 3 0 0 -90    0 -1 0 0 0 0     76
+# TAU1  Doodson  1 -2 3 0 0 -90    5
+#             -2  0  0 .0  0.0446    -1  0  0 .25 0.0426R1   0 -1  0 .50 0.0284
+#              0  1  0 .50 0.2170     0  2  0 .50 0.0142
+MPS2  Compound 0 0 1 1 0 0 0 0 0 0 -1
+MSK6  Compound       0  0  0  1  1  0  0  1
+MSM   Basic  0 1 -2 1 0 0      0 0 0 0 0 0      73
+MSN2  Compound       0  0  0  1  1 -1  0  0
+MSN6  Compound       0  0  0  1  1  1  0  0
+NLK2  Compound 0 0 0 0 0 1 1 -1
+NO1   Compound -1 0 0 0 0 1 0 0
+OP2   Compound       1  0  1  0  0  0  0  0
+# OQ2   Doodson 2 -5 2 3 0 0   2
+#             -1  0  0 .25 0.1042R2   0 -1  0 .50 0.0386
+PHI1  Basic 1 0 3 0 0 -90     0 0 0 0 0 0      1
+# KP1   Compound 0 0 -1 0 0 0 0 1
+PI1   Basic 1 0 -2 0 1 90     0 0 0 0 0 0      1
+# TK1   Basic 1 0 -2 0 1 90     0 0 1 0 0 0      227
+PSI1  Basic 1 0 2 0 -1 -90    0 0 0 0 0 0      1
+# RP1   Basic 1 0 2 0 -1 90     0 0 0 0 0 0      1
+S3    Basic 3 0 0 0 0 0       0 0 0 0 0 0      1
+SIG1  Basic 1 -4 3 0 0 90     2 -1 0 0 0 0     75
+SK3   Compound       0  1  0  0  1  0  0  0
+SK4   Compound 0 0 0 0 1 0 0 1
+SN4   Compound       0  0  0  0  1  1  0  0
+SNK6  Compound 0 0 0 0 1 1 0 1
+SO1   Basic 1 2 -1 0 0 -90    0 -1 0 0 0 0     76
+SO3   Compound       1  0  0  0  1  0  0  0
+THE1  Basic 1 1 -1 1 0 -90    0 -1 0 0 0 0     76
+#
+# Remaining constituents merged from harmonics.anchorage 2001-01
+#
+2PO1     Compound    -1  0  2  0  0  0  0  0
+2NS2     Compound     0  0  0  0 -1  2  0  0
+# MLN2S2   Compound     0  0  0  1 -2  1  1  0
+2ML2S2   Compound     0  0  0  2 -2  0  1  0
+SKM2     Compound     0  0  0 -1  1  0  0  1
+2MS2K2   Compound     0  0  0  2  1  0  0 -2
+MKL2S2   Compound     0  0  0  1 -2  0  1  1
+M2(KS)2  Compound     0  0  0  1 -2  0  0  2
+2SN(MK)2 Compound     0  0  0 -1  2  1  0 -1
+2KM(SN)2 Compound     0  0  0  1 -1 -1  0  2
+NO3      Compound     1  0  0  0  0  1  0  0
+2MLS4    Compound     0  0  0  2 -1  0  1  0
+ML4      Compound     0  0  0  1  0  0  1  0
+N4       Compound     0  0  0  0  0  2  0  0
+SL4      Compound     0  0  0  0  1  0  1  0
+MNO5     Compound     1  0  0  1  0  1  0  0
+2MO5     Compound     1  0  0  2  0  0  0  0
+MSK5     Compound     0  1  0  1  1  0  0  0
+
+# 2018-01 definition change
+# Old definition = 3K1+M2
+#   3KM5     Compound     0  3  0  1  0  0  0  0
+#   -> Basic 5 -2 5 0 0 90 = IHO definition, XDO 5 855 554
+# New definition = K1+M2+K2
+3KM5     Compound     0  1  0  1  0  0  0  1
+
+2MP5     Compound     0  0  1  2  0  0  0  0
+3MP5     Compound     0  0 -1  3  0  0  0  0
+MNK5     Compound     0  1  0  1  0  1  0  0
+2NMLS6   Compound     0  0  0  1 -1  2  1  0
+MSL6     Compound     0  0  0  1  1  0  1  0
+2ML6     Compound     0  0  0  2  0  0  1  0
+2MNLS6   Compound     0  0  0  2 -1  1  1  0
+3MLS6    Compound     0  0  0  3 -1  0  1  0
+2MNO7    Compound     1  0  0  2  0  1  0  0
+2NMK7    Compound     0  1  0  1  0  2  0  0
+2MSO7    Compound     1  0  0  2  1  0  0  0
+MSKO7    Compound     1  0  0  1  1  0  0  1
+2MSN8    Compound     0  0  0  2  1  1  0  0
+2(MS)8   Compound     0  0  0  2  2  0  0  0
+2(MN)8   Compound     0  0  0  2  0  2  0  0
+2MSL8    Compound     0  0  0  2  1  0  1  0
+4MLS8    Compound     0  0  0  4 -1  0  1  0
+3ML8     Compound     0  0  0  3  0  0  1  0
+3MK8     Compound     0  0  0  3  0  0  0  1
+2MSK8    Compound     0  0  0  2  1  0  0  1
+2M2NK9   Compound     0  1  0  2  0  2  0  0
+3MNK9    Compound     0  1  0  3  0  1  0  0
+4MK9     Compound     0  1  0  4  0  0  0  0
+3MSK9    Compound     0  1  0  3  1  0  0  0
+4MN10    Compound     0  0  0  4  0  1  0  0
+3MNS10   Compound     0  0  0  3  1  1  0  0
+4MS10    Compound     0  0  0  4  1  0  0  0
+3MSL10   Compound     0  0  0  3  1  0  1  0
+3M2S10   Compound     0  0  0  3  2  0  0  0
+4MSK11   Compound     0  1  0  4  1  0  0  0
+4MNS12   Compound     0  0  0  4  1  1  0  0
+5MS12    Compound     0  0  0  5  1  0  0  0
+4MSL12   Compound     0  0  0  4  1  0  1  0
+4M2S12   Compound     0  0  0  4  2  0  0  0
+#
+# Other constituents needed by Dutch data 2001-01
+#
+# M1C is A71 in Table 2 of SP98
+# M1C       Basic 1 -1 1 0 0 0   1 -1 0 0 0 0   144
+3MKS2     Compound  0 0 0 3 -1 0 0 -1
+OQ2-HORN  Compound  1 0 0 0 0 0 0 0 1
+# MSK2      Compound  0 0 0 1 1 0 0 -1
+MSP2      Compound  0 0 -1 1 0 0 0 0 0 0 1
+2MP3      Compound  0 0 -1 2 0 0 0 0
+4MS4      Compound  0 0 0 4 -2 0 0 0
+2MNS4     Compound  0 0 0 2 -1 1 0 0
+2MSK4     Compound  0 0 0 2 1 0 0 -1
+# 3MN4      Compound  0 0 0 3 0 -1 0 0
+# 2MSN4     Compound  0 0 0 2 1 -1 0 0
+# 3MK5      Compound  0 -1 0 3 0 0 0 0
+# 3MO5      Compound  -1 0 0 3 0 0 0 0
+# 3MNS6     Compound  0 0 0 3 -1 1 0 0
+# 4MS6      Compound  0 0 0 4 -1 0 0 0
+# 2MNU6     Compound  0 0 0 2 0 0 0 0 0 1
+3MSK6     Compound  0 0 0 3 1 0 0 -1
+MKNU6     Compound  0 0 0 1 0 0 0 1 0 1
+# 3MSN6     Compound  0 0 0 3 1 -1 0 0
+M7        Compound  0 0 0 3 0 0 0 0 0 0 0 1
+2MNK8     Compound  0 0 0 2 0 1 0 1
+2(MS)N10  Compound  0 0 0 2 2 1 0 0
+#
+# Other constituents needed by German data 2004-08-11
+#
+# This is indistinguishable from NO3
+# MQ3       Compound  0 0 0 1 0 0 0 0 1
+# MNUS2     Compound  0 0 0 1 -1 0 0 0 0 1
+# 2MK2      Compound  0 0 0 2 0 0 0 -1
+#
+# Added 2018-01
+#
+# KJ2-IHO  Basic  2 1 2 -1 0 180     0 -2 0 0 0 0     79

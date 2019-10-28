@@ -1,0 +1,337 @@
+Message-Id: <m0z365N-000IQvC@emu.dpmms.cam.ac.uk>
+Date: Sun, 2 Aug 98 22:54 BST
+To: dave@universe.digex.net
+From: C.J.Read@dpmms.cam.ac.uk
+Subject:  Tide and least squares.                      
+Cc: 
+
+Dear Dave,
+
+   I know what "least squares" is and will be happy to explain
+how to do it. Just explain me what the formula exactly is that you use, 
+and I'll either (a) explain how to fit it to the data using least squares
+or (b) even program it myself, tho' my programming ain't as good as my maths.
+
+All the best,
+
+      Charles Read. (Dr.)
+
+(professional mathematician, occasional sailor)
+
+
+
+Date: Sun, 2 Aug 1998 21:24:08 -0400
+Message-Id: <199808030124.VAA28732@universe.digex.net>
+From: Dave Flater <dave@universe.digex.net>
+To: C.J.Read@dpmms.cam.ac.uk
+In-reply-to: <m0z365N-000IQvC@emu.dpmms.cam.ac.uk> (C.J.Read@dpmms.cam.ac.uk)
+Subject: Re: Tide and least squares.
+
+>    I know what "least squares" is and will be happy to explain
+> how to do it. Just explain me what the formula exactly is that you use, 
+> and I'll either (a) explain how to fit it to the data using least squares
+> or (b) even program it myself, tho' my programming ain't as good as my maths.
+
+Excellent....
+
+Here is the relevant quote from "Computer Applications to Tides in the
+National Ocean Survey:"
+
+    Each observed height is made an observation equation,
+
+    h  = H  + sum( C cos a t ) + sum( S sin a t )
+     i    0         w     w i          w     w i
+
+    for n observed heights (h sub i) at times (t sub i) for i = 0 to
+    (n-1), m constituents from w = 1 to m and a constant, H sub 0.  As
+    above, C sub w and S sub w are the real (in phase) and imaginary
+    (out of phase) amplitudes, and a sub w is the constituent speed in
+    degrees per hour.  Comparable expressions can be used with
+    sampling intervals different than an hour.  Solving for (2m+1)
+    unknowns in the least squares sense furnishes (2m+1) normal
+    equations that can be resolved by matrix algebra....
+
+I think I have a grip on this for all except the "solving in the least
+squares sense."  Your help is much appreciated.
+
+The formulas for C sub w and S sub w are as follows:
+
+    C = (2/n) * sum for i=0 to n-1 ( h cos ia )
+     w                                i      w
+
+    S = (2/n) * sum for i=0 to n-1 ( h sin ia )
+     w                                i      w
+
+where n is the number of hourly values, h sub i are the hourly
+heights, and a sub w is the constituent speed in degrees per solar
+hour.
+
+Many thanks,
+DWF
+
+
+
+Message-Id: <m0z3o6d-000IQvC@emu.dpmms.cam.ac.uk>
+Date: Tue, 4 Aug 98 21:54 BST
+To: dave@universe.digex.net
+From: C.J.Read@dpmms.cam.ac.uk
+Subject:  Re: Tide and least squares.                       
+Cc: 
+
+OK here we go. In general you take n empirical readings of Something,
+call it h(t), at n different times t which do not need to be in a 
+line or indeed related to one another at all - some situations
+you might find it paid you to take readings at RANDOM times t sub i
+in an interval, but most cases the important thing is just to 
+get as much reliable data as possible. 
+
+You then try to fit an approximating function H(t) to the 
+observed h(t), where H(t) has some parameters -in your case
+
+  H(t)=H(t,H_0,C_1....C_m,S_1.....S_m)
+
+
+To do it rigorously you must mean something explicit by "trying to fit".
+What the "least squares" method means is that you try to choose
+H_0.......S_m so as to minimise the sum of the squares of the n ERRORS,
+where naturally
+
+Error(t)=H(t)-h(t).
+
+FAQ: why the squares of the errors??? why not minimise the sum
+of the absolute values of the errors, or the fourth powers, or some
+other quantity???
+
+Answer: because the mathematics works out very much simpler with least
+SQUARES than with anything else. If you use SQUARES you have an idea of
+distance that you can use Pythagoras' on and play around with all sorts of 
+helpful geometric ideas. Such as this one:
+
+FAQ: OK so here we are trying to fit a "trignometric polynomial"
+
+ H(t)  = H  + sum( C cos a t ) + sum( S sin a t )
+          0         w     w            w     w 
+
+to our observed h(t). How do we do it??
+
+Answer: Compute the n-dimensional vector (h_1,....h_n) of observed heights
+at times t_1.......t_n. Then compute 2m+1 vectors each of which represents
+one of the kinds of component we are using. The first vector v_0 would be a 
+constant (1,1,1,1,,,1) which we multiply by H_0 to get the constant
+"function" H_0(t). The second would be v_1=(cos (a_1 t_1), cos (a_1 t_2),.....
+cos(a_1 t_n)), the "in phase" bit of our first component, then 
+v_2=(sin (a_1 t_1), sin (a_1 t_2),.....sin(a_1 t_n)), then 
+v_3=(cos (a_2 t_1), cos (a_2 t_2),.....cos(a_2 t_n)) and so on.
+
+Our least squares fitting job is simply to find the linear combination of these 
+2k+1 vectors v_i that is closest (in the sense of Pythagoras' idea of 
+distance) to the observed vector h=(h_1,....h_n). It's a "shortest distance"
+problem in n-dimensional space. Having found the closest linear combination,
+it will have coefficients attached, say it's
+
+H= H_0 v_0 + C_1 v_1 + S_1 v_2+ .... + S_m v_{2m}
+
+Then those are the numbers H_0......S_m you're looking for. 
+
+Geometric idea: If I hold a ball above a horizontal table, the 
+closest point on the table to the ball is the one vertically below it.
+That is, the closest point is the one such that the vector from the 
+ball to the table is ORTHOGONAL (at rightangles) to the table.
+
+Generalisation to n dimensions: If I "hold" a vector h "above"
+a "hyperplane" consisting of all linear combinations of vectors
+v_0..........v_{2m} then the closest point H to h
+is the one such that the error H-h is ORTHOGONAL to v_0......v_{2m}.
+That is, if the best fit is H then H must satisfy 2m+1 linear
+equations of form 
+
+        (H-h).v_i = 0
+
+where . stands for the scalar product u.v = sum (i=0 to n-1) u_i v_i,
+which is zero for nonzero vectors u and v if and only if they are orthogonal.
+Now H is given by the formula 
+
+
+H= H_0 v_0 + C_1 v_1 + S_1 v_2+ .... + S_m v_{2m}
+
+and guess what, we have a free choice of 2m+1 constants when choosing 
+the function H. 2m+1 unknowns, 2m+1 equations.... solve it by 
+inverting a matrix, that's all there is to it. If the matrix isn't
+invertible you didn't take enough sample points. Otherwise, you're
+in business.
+
+
+IN PRACTISE: I will write you a program taking a few lines of APL/2
+(a language which conveniently has a builtin matrix inversion routine).
+Contact you in a few days' time.
+
+All the best,
+
+       Charles Read.
+
+
+
+Message-Id: <m0z4Q0P-000IQvC@emu.dpmms.cam.ac.uk>
+Date: Thu, 6 Aug 98 14:22 BST
+To: dave@universe.digex.net
+From: C.J.Read@dpmms.cam.ac.uk
+Subject:  Re: Tide and least squares.                       
+Cc: 
+
+
+Dear Dave,
+
+   I'm off to a maths conference next week, so here's my promised APL
+routine. I'm still here til the weekend for comments though.
+I'd do a C one for you but it takes longer; maybe when I get 
+back. To run it, get hold of APL/11 which is freeware; if you have
+a Linux box handy you'll find a binary version in the devel/lang/apl
+subdirectory of sunsite & mirrors, named something like apl11bin.tgz.
+If not, the source code there shd compile on most Unices, and I believe
+APL/11 was available for DOS/win before Linux, but I'm not sure where.
+APL/11 has various bugs as an implementation of APL, but none serious
+enough to stop this easy bit of linear maths.
+   Then grab the file http://read.trin.cam.ac.uk/tide.txt
+(noting it contains some backspaces, beloved of APL)
+and save it in the same directory you unpacked APL. Note that
+though more than 3 lines, it is only 8 lines long. Start APL.
+Give the command 
+
+       )read tide.txt
+
+and the tide routine is loaded. It takes as its left argument 
+a 2 by n matrix whose first row is your height observations and whose 
+second row is the times (in hours) at which they were
+made. Time zero is the point when all those cosines in the formula are 1.
+ It takes as right argument the constituent speeds (in degrees
+per hour).
+ It returns a vector containing all the necessary amplitudes, in the order
+H_0,C_1,C_2,...,C_m,S_1,S_2,....,S_m.
+ You must have m at least 2 and n at least 2m+1.
+
+
+        Example:    
+
+Form a 2x10 matrix h consisting of n pairs (sin 3t + 1.725cos t, t) for
+t=1 to 10 
+
+  h{  2 10R  ( (2O3XI10)+(1.725X1OI10) ),I10 
+
+Have a look at it:
+
+
+  h
+  4.61544952e-01  2.52870835e+00 -6.67698248e-01 -4.61630346e-01
+                 -2.41383229e+00  1.78324974e-01  5.85572623e-01
+                  2.13082198e+00  4.18765578e-01 -7.84184966e-01
+  1.00000000e+00  2.00000000e+00  3.00000000e+00  4.00000000e+00
+                  5.00000000e+00  6.00000000e+00  7.00000000e+00
+                  8.00000000e+00  9.00000000e+00  1.00000000e+01
+
+
+
+Form the corresponding pair a_1 = 180/PI, a_2 = 3x180/PI to pick out these
+frequencies exactly (sorry, sine/cosine are in radians)
+
+  a{   (1 3)X180%O1
+
+Have a look at it:
+
+   a
+ 5.72957795e+01 1.71887339e+02
+
+Try the routine:
+
+
+   h tide a
+ 0.000 0.000 1.000 1.725 0.000
+
+
+Hey presto! it picks out the coefficient 1 for cos 3t and 1.725 for sin t. 
+
+
+Try it with slightly wrong frequencies:
+
+   h tide a + 1
+  6.45911297e-03 -1.74548876e-01  1.00331393e+00  1.71850517e+00
+                  1.32494004e-01
+
+and get a slightly different answer.
+
+Happy computing,
+
+
+
+    Charles Read.
+
+
+
+Date: Thu, 6 Aug 1998 12:55:03 -0400
+Message-Id: <199808061655.MAA06571@universe.digex.net>
+From: Dave Flater <dave@universe.digex.net>
+To: C.J.Read@dpmms.cam.ac.uk
+In-reply-to: <m0z4Q0P-000IQvC@emu.dpmms.cam.ac.uk> (C.J.Read@dpmms.cam.ac.uk)
+Subject: Re: Tide and least squares.
+
+Many thanks for the APL.  I'll install APL/11 and try to get this
+working on my PC while you are at the maths conference.  For now I'll
+post this 9-line magic spell on my news page to let people know that
+help is on the way ;-)
+
+Don't worry about doing a C one.  Math is hard but data processing is
+easy.  I'll find a way to get the data into APL.
+
+Thanks again,
+DWF
+
+
+
+Message-Id: <m0zALNX-000IQvC@emu.dpmms.cam.ac.uk>
+Date: Sat, 22 Aug 98 22:39 BST
+To: dave@universe.digex.net
+From: C.J.Read@dpmms.cam.ac.uk
+Subject:  APL                       
+Cc: 
+
+Dear Dave,
+  I am once again off, this time on holiday, this time for a whole month.
+Here's a line by line description of what my program does;
+translation into octave shouldn't then be a problem.
+
+a{b tide p; h; t; z; zt; sprod
+p{O1Xp%180  
+      convert the periods p from degrees/hour to radians/hour.
+      p <- p*PI/180
+h{b[1;]
+      h the list of observed heights
+t{b[2;]
+      t the times at which observations were made
+z{p J.X t
+      z is a matrix containing all the products pt where p is a period
+      and t one of the observation times.
+z{((1,Rh)R1),[1](2Oz),[1]1Oz
+      z becomes a matrix whose first row is a row of N 1's, then 
+      rows of cos pt_i (i=1 to N) for the various p; then rows of
+      sin pt_i.
+zt{\\bOz
+      form the transpose of z
+sprod{z+.Xzt
+      sprod is the matrix of scalar products of the "trial vectors"
+      (1....1) (cos p_1t_1.......cos p_1t_N) and so forth with each other.
+
+
+a{h+.Xzt+.X(L\b%sprod)
+
+      for an answer, you use h matrix multiplied by z transpose, matrix
+      multiplied by
+      the inverse  of the square matrix of inner products. h is a row vector,
+      so it counts as a 1 by N matrix.
+      zt is N by 2m+1, where m is the number of periods; sprod is 
+      (2m+1 by N) times (N by 2m+1) so, 2m+1 by 2m+1;
+      so you get an answer which is 1 by 2m+1, a row of answer
+      coefficients.
+
+Cheers,
+                Charles Read.
+
+

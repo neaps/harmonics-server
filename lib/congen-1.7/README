@@ -1,0 +1,318 @@
+$Id: README 6742 2018-01-14 18:31:16Z flaterco $
+
+    congen:  constituent generator.
+    Copyright (C) 1997  David Flater.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+Preface
+-------
+
+This README is intended to be read using a monospace font and the UTF-8
+character encoding.  One can launch a suitable xterm with the following
+command:
+
+LANG=en_US.utf8 xterm -fn -misc-fixed-medium-r-normal--20-200-75-75-c-100-iso10646-1 &
+
+
+Overview
+--------
+
+This is the README file for the Congen package.  The Congen package contains
+three distinct pieces, each of which is documented in more detail below:
+
+1.  libcongen, a C++ library for generating the speeds, equilibrium
+arguments, and node factors of tidal constituents.
+
+2.  congen, a command-line program for generating the speeds, equilibrium
+arguments, and node factors of tidal constituents using text files for input
+and output.
+
+3.  Additional scripts that are not normally needed but are useful for
+troubleshooting.
+
+THIS PACKAGE IS AVAILABLE FROM:
+http://www.flaterco.com/xtide/files.html#experts
+
+
+Prerequisites
+-------------
+
+If libtcd is properly installed, the congen program will automatically be
+linked with it and enabled to generate a TCD file in lieu of its usual text
+format output.  libtcd can be obtained from:
+http://www.flaterco.com/xtide/files.html#libtcd
+
+If libtcd is absent, the congen program will still compile but the -tcd
+command line option will be disabled.
+
+
+Installation
+------------
+
+Congen is packaged with GNU automake, so all usual GNU tricks should work.
+Help on configuration options can be found in the INSTALL file or obtained by
+entering ./configure --help.
+
+Normally, one should only need to do the following to compile and install the
+library and client program:
+
+bash-3.1$ ./configure
+bash-3.1$ make
+bash-3.1$ su
+bash-3.1# make install
+
+However, in the event that libtcd is installed in a nonstandard location, an
+invocation such as the following might be required:
+
+bash-3.1$ ./configure CPPFLAGS="-I/usr/local/libtcd/include" \
+                      LDFLAGS="-L/usr/local/libtcd/lib"
+bash-3.1$ make
+
+
+libcongen
+---------
+
+libcongen is a C++ library for generating the speeds, equilibrium arguments,
+and node factors of Darwin-style tidal constituents more or less as defined
+in SP 98:
+
+   Manual of Harmonic Analysis and Prediction of Tides.  Special Publication
+   No. 98, Revised (1940) Edition (reprinted 1958 with corrections;
+   reprinted again 1994).  United States Government Printing Office, 1994.
+
+Additionally, libcongen provides limited support for approximating
+Doodson-style tidal constituents within the infrastructure of the former.
+The Doodson approach is discussed in the following publication:
+
+   Foreman, M.G.G., 1977.  Manual for Tidal Heights Analysis and Prediction.
+   Pacific Marine Science Report 77-10, Institute of Ocean Sciences,
+   Patricia Bay, Sidney, B.C. (2004 revision).
+
+The Congen header file is intended to be self-documenting with regards to use
+of the interface, assuming that one has access to SP 98 and a general
+understanding of the subject matter.  Client programs should #include
+<Congen> and link with -lcongen -lm.
+
+
+congen
+------
+
+The congen program provides the functionality of libcongen using text files
+for input and output.
+
+Usage: congen [-b year] [-e year] [-a1|-a2] [-tcd filename] [-sp98test]
+              < congen_input.txt > output.txt
+
+Years may range from 1 to 4000, but the Gregorian calendar is assumed in all
+cases.
+
+-b year   Sets the first year for which to generate output.  Default 1970.
+
+-e year   Sets the last year for which to generate output.  Default 2037.
+
+-a1       Calibrate speeds of constituents for 1900-01-01.  This is the
+          default and it is necessary for compatibility with US National
+          Ocean Service (NOS) predictions.
+
+-a2       Calibrate speeds of constituents for the beginning of the year that
+          is midway between the first and last years.
+
+-tcd filename  Instead of sending text format output to stdout, write the
+               results as a TCD file.  Requires libtcd.
+
+-sp98test   As a sanity check, generate tables from SP 98 and send to stdout.
+            Make sure your terminal is using a monospace font, UTF-8, and at
+            least 87 characters wide.
+
+The format of the input file for the congen program is defined below.  Please
+see the included file congen_input.txt for numerous examples.
+
+                                - Terminology -
+
+(Vₒ+u)   Constituent argument at beginning of a tidal series
+f        Node factor
+
+V        Principal portion of constituent argument
+T        Hour angle of mean sun
+s        Mean longitude of moon
+h        Mean longitude of sun
+p        Mean longitude of lunar perigee
+p₁       Mean longitude of solar perigee
+
+u        Part of constituent argument depending upon variations in obliquity of
+         lunar orbit
+ξ        Longitude in moon's orbit of lunar intersection
+ν        Right ascension of lunar intersection
+ν′       Term in argument of lunisolar constituent K₁
+2ν″      Term in argument of lunisolar constituent K₂
+Q        Term in argument of constituent M₁
+R        Term in argument of constituent L₂
+Qᵤ       Term in argument of constituent M₁
+N        Longitude of moon's node
+
+r    (For Doodson satellite) Amplitude ratio vs. the main constituent
+α    (For Doodson satellite) Phase correction vs. the main constituent
+
+                         - Darwin-style constituents -
+
+A Darwin-style constituent is specified as a line of this form:
+  name  Basic   T s h p p₁ c   ξ ν ν′ 2ν″ Q R   f_formula
+
+c is a constant term specified in degrees.  The other lettered fields give
+coefficients of the astronomical terms defined above.
+
+With the exception of "unity," for which we use 1, Congen and SP 98 Table 2
+identify node factor formulas by their formula numbers in SP 98.  Users of
+libcongen have the benefit of symbolic constants defined in the Congen header
+file, but in congen input you must supply the number.
+
+  f_1   = 1;
+  f_Mm  = 73;
+  f_Mf  = 74;
+  f_O₁  = 75;
+  f_J₁  = 76;
+  f_OO₁ = 77;
+  f_M₂  = 78;
+  f_KJ₂ = 79;
+  f_M₁C = 144;  // A71 in SP 98.
+  f_M₃  = 149;
+  f_M₁  = 206;  // Unique U.S. definition.
+  f_L₂  = 215;
+  f_K₁  = 227;
+  f_K₂  = 235;
+
+                        - Doodson-style constituents -
+
+A Doodson-style constituent begins with a line of this form:
+  name  Doodson   T s h p p₁ c   #-satellites
+followed by additional lines that specify the indicated number of satellites,
+possibly more than one per line.
+
+Each satellite has the following form, which is identical to the format used
+in the original IOS tidal package's tide3.dat file:
+      Δp -ΔN Δp₁ α r[RN]
+(A capital letter 'R' and a digit are optionally suffixed to r.)
+
+Please note:
+  Consistent with IOS, ΔN is NEGATED.
+  Consistent with IOS, α is specified in ROTATIONS, not degrees.
+  Latitude-dependent satellites (those with RN) are IGNORED by congen.
+
+Following is a complete example of a translation from IOS' tide3.dat.
+
+Before:
+
+      R2      2  2 -1  0  0 -1-0.50   2
+      R2     0  0  2 .50 0.2535     0  1  2 .0  0.0141
+
+After:
+
+R2-IOS  Doodson   2 0 1 0 -1 180    2
+             0  0  2 .50 0.2535     0  1  2 .0  0.0141
+
+Note the differences in the V part of the record.  In Congen terms, the first
+part of the record for each constituent in IOS' tide3.dat has the following
+form:
+   T  s+T  h-T  p  -N  p₁  -c (rotations)
+
+To get T, s, h, p, p₁, c as expected by Congen,
+  Given       T       s+T       h-T    p     -N    p₁     -c (rotations)
+  Do this    same  subtract T  add T  same  skip  same  multiply by -360
+  To get      T        s         h     p           p₁      c (degrees)
+
+N has nowhere to go, but it is almost always zero.  The only exception in the
+IHO constituent list is 3N2MS12 (L YZA YZZ).
+
+                           - Compound constituents -
+
+A compound constituent may be specified as a line of this form, providing
+coefficients of the indicated constituents:
+  name  Compound   O₁ K₁ P₁ M₂ S₂ N₂ L₂ K₂ Q₁ ν₂ S₁ M₁-DUTCH λ₂
+
+Trailing zeroes may be omitted.
+
+Congen uses compiled-in definitions of the indicated constituents to compute
+the compound constituent, so each of the 13 may be specified in lazy fashion
+using a coefficient of 1 for itself.
+
+                                 - Comments -
+
+Comment lines contain # in the first column.
+
+
+Additional scripts
+------------------
+
+The program diff_congen_output compares two congen outputs, which are assumed
+to have been generated from the same or comparable input, and reports on
+discrepancies between them.  "Comparable input" means that the constituents
+must have the same names, be in the same order, and have the same range of
+years.
+
+diff_congen_output ignores the following amount of error:
+  speeds:                   0 degrees/hour
+  equilibrium arguments:  .01 degree
+  node factors:         .0001
+
+This corresponds to rounding differences in the last significant digit of
+equilibrium arguments and node factors and zero tolerance for differences in
+speeds.
+
+The script XDO2Basic.rb translates an Extended Doodson Number (XDO) as used
+in "Standard list of tidal constituents" from the Tide, Water Level and
+Current Working Group (TWCWG) of the IHO to the V part of a Congen Basic
+constituent definition.  Both numeric and alphabetic forms are supported.
+
+  bash-4.3$ XDO2Basic.rb ABZYZZA     # J1
+  XX1  Basic  1 1 1 -1 0 -90
+
+The script Compound2Basic.rb takes Congen format input and reduces all
+Compound constituents to Basic format, to the extent possible.  It does not
+handle node factors (it sets all of them to 1), and constituents with a
+nonzero coefficient for M1-DUTCH are not correctly reducible (warnings are
+placed in the output where applicable).
+
+  bash-4.3$ ./Compound2Basic.rb
+  2MK3  Compound  0 -1 0 2 0 0 0 0
+  2MK3      Basic  3 -4 3 0 0 90      4 -4 1 0 0 0      1
+
+
+UTF-8 sources
+-------------
+
+Some source files in this package, as well as this README, use the UTF-8
+character encoding to accurately reproduce the Greek letters and so forth
+that were used in the original formulæ.  However, compiling a program that
+uses Unicode characters in identifiers is still difficult and not very
+portable.  This distribution therefore uses a sed script to automatically
+replace the Unicode characters in source files with plain text; λ becomes
+lambda, Δ becomes DELTA, etc.
+
+The source code as it was originally intended to look is in the utf8-src
+subdirectory of the distribution.  For maximum readability, those wishing to
+review the source code should read the sources in utf8-src rather than the
+"mangled" versions that are built from them.
+
+
+Supporting materials
+--------------------
+
+Related materials and government publications can be downloaded from
+http://www.flaterco.com/xtide/files.html under the headings "For experts" and
+"Miscellaneous government publications."
+
+
+(End of README)

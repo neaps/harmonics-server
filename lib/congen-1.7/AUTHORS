@@ -1,0 +1,25 @@
+Congen is by David Flater <dave@flaterco.com>.
+
+Acknowledgements
+----------------
+
+This program is mostly derived from the following publication (SP 98):
+
+   Manual of Harmonic Analysis and Prediction of Tides.  Special
+   Publication No. 98, Revised (1940) Edition (reprinted 1958 with
+   corrections; reprinted again 1994).  United States Government
+   Printing Office, 1994.
+
+Special credit is due to the late Ed Wallner for mentoring me on the
+black magic that Congen does.  This included pointing out errors that
+I made in interpreting SP 98 and providing source code for the
+spherical trig functions that SP 98 left as an exercise for the
+reader.
+
+I am also indebted to Mike Foreman and other contributors to the IOS
+tidal package
+(http://www.pac.dfo-mpo.gc.ca/sci/osap/projects/tidpack/tidpack_e.htm).
+Although I recycled no source code from IOS, the approximation of
+Doodson-style constituents was based entirely on the documentation and
+data that were once publicly available on the IOS web site.  The site
+is now password-protected.

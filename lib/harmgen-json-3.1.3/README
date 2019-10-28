@@ -1,0 +1,568 @@
+$Id: README 6756 2018-01-15 16:06:54Z flaterco $
+
+    harmgen:  Derive harmonic constants from water level observations.
+    Copyright (C) 1998  David Flater.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+This package is available from
+http://www.flaterco.com/xtide/files.html#experts.
+
+
+Credits
+-------
+
+The math in harmgen.sh was based on an APL file contributed by Charles Read,
+a professional mathematician and occasional sailor who made very short work
+of the fearsome least squares analysis.  The subsequent extension to handle
+multiple years was explained by Björn Brill.  The relevant emails are
+included in the distribution for their educational value (files C_J_Read.txt
+and Bjoern_Brill.txt).
+
+
+Software prerequisites
+----------------------
+
+Required:  Congen (libcongen), available from
+http://www.flaterco.com/xtide/files.html#experts.
+
+Required:  Compatible version of Octave, available from
+http://www.octave.org/.
+
+  Some help on installing Octave from source is available at
+  http://www.flaterco.com/kb/Octave.html
+
+Optional:  Harmbase2, available from
+http://www.flaterco.com/xtide/files.html#experts.  Harmgen is designed to
+integrate with Harmbase2, but you don't need Harmbase2 if all you want is the
+harmonic constants.
+
+
+Hardware requirements
+---------------------
+
+The amount of memory needed for the least squares computation is proportional
+to the product of the number of observations with the number of constituents.
+A modern desktop PC with multiple gigabytes of RAM can easly handle hundreds
+of thousands of observations and over 100 constituents.
+
+
+Preface / caution
+-----------------
+
+The reliability of both the input and the output of Harmgen has to be
+assessed rather than assumed.  A minimum-length time series, even one of high
+quality, is unlikely to determine the long-term constituents with much
+accuracy.  If the input data quality is low, the quality of results will also
+be low.
+
+
+Data requirements
+-----------------
+
+You will need, at a minimum, a year's worth of water level observations, at
+least one per hour.  More years is better, to a point.  19 years is a
+complete epoch; beyond that, the risks of using increasingly old data
+probably exceed the benefits.  If you are in an area where silting, dredging,
+or an earthquake has affected the behavior of the tides, the useful range may
+be significantly shorter than 19 years.
+
+Observations should be taken at periodic or random intervals.  It doesn't
+matter if there are gaps, if the interval changes halfway through, etc.
+However, a time series consisting of only the high and low tides is *not*
+good enough.  One observation per hour is a reasonable minimum; ten per hour
+is not unreasonable; more than ten per hour is unlikely to improve results.
+
+This time series should be formatted the same as XTide's raw mode output,
+with Unix time_t timestamps on the left (these are in seconds since
+1970-01-01 00:00 UTC) and observations on the right:
+
+902856260 1.088975
+902859860 0.751052
+902863460 0.511209
+etc.
+
+You will also need a Congen input file that defines the constituent set that
+you want to use.  The distribution comes with three examples that you can use
+as-is:
+
+ congen_1yr.txt:   140 constituents, usable with at least 1 year of data.
+ congen_5yrs.txt:  144 constituents, usable with at least 5 years of data.
+ congen_9yrs.txt:  145 constituents, usable with at least 9 years of data.
+
+The install process copies these three files into the pkgdata directory,
+which normally is /usr/local/share/harmgen.
+
+
+Length of time series versus available constituents
+---------------------------------------------------
+
+Harmgen does a basic check to ensure that the time series covers a long
+enough span of time to make it possible to distinguish all of the available
+constituents from each other.  This does not mean that the results will be
+reliable, only that they might be.  If the time series is definitely not long
+enough, Harmgen reports errors similar to the following.
+
+  The time series of length 1.998558 average Gregorian years
+  is too short to separate the following constituents from each other:
+    3MKS2 (26.8701754 deg/hr) and 2NS2 (26.8794590 deg/hr)
+      delta = 0.226053 rotations/year
+    NLK2 (27.8860711 deg/hr) and 2N2 (27.8953548 deg/hr)
+      delta = 0.226053 rotations/year
+    MSL6 (88.5125831 deg/hr) and SNK6 (88.5218668 deg/hr)
+      delta = 0.226053 rotations/year
+    3ML8 (116.4807916 deg/hr) and 2MNK8 (116.4900752 deg/hr)
+      delta = 0.226053 rotations/year
+
+You must either get a longer time series or comment out one (or both) of each
+pair of colliding constituents in the Congen input file.  The files
+congen_1yr.txt and congen_5yrs.txt that are provided in the distribution were
+both produced by commenting out constituents from congen_9yrs.txt to
+eliminate collisions.
+
+If a time series shorter than 1 year is used, long-term constituents cannot
+reliably be determined through the analysis that Harmgen performs, and you
+will get the following error:
+
+  The time series of length 0.834948 average Gregorian years
+  is too short to resolve SA (0.0410686 deg/hr, 1.000001 rotations/year)
+
+To have any hope of obtaining acceptable results with a short time series,
+the long-term constituents must be replaced with inferred values.  libtcd and
+XTide provide a capability to infer some constituents when a station is
+loaded, but the effectiveness of this feature when used in conjunction with
+Harmgen and time serieses shorter than 1 year has not been tested.
+
+The error checks described above are based solely on the earliest and latest
+times appearing in the time series.  They will not save you if the time
+series has enormous gaps.
+
+If you want to ignore the errors and proceed anyway, use the --force
+command-line option.
+
+
+Compiling and installing harmgen
+--------------------------------
+
+bash-3.1$ ./configure
+bash-3.1$ make
+bash-3.1$ su
+bash-3.1# make install
+
+Harmgen is packaged with the popular and portable GNU automake, so all usual
+GNU tricks should work.  Help on configuration options can be found in the
+INSTALL file or obtained by entering ./configure --help.
+
+The files that get installed are:
+
+In ${exec_prefix}/bin:      harmgen (the actual application that you run)
+In ${exec_prefix}/libexec:  harmgen.sh (script needed by the application)
+In $(datadir)/harmgen:      congen_1yr.txt congen_5yrs.txt congen_9yrs.txt
+
+By default, the three directories listed above resolve to /usr/local/bin,
+/usr/local/libexec, and /usr/local/share/harmgen respectively.
+
+
+Running harmgen
+---------------
+
+You must do 'make install' before running harmgen because the harmgen
+application needs to find the harmgen.sh script in the libexec directory.
+
+The harmgen program has three mandatory parameters:
+  The name of the Congen input file
+  The name of the time series input file
+  The name of the output file
+
+The --force parameter disables error stops.  The --maxconstituents and
+--minamplitude parameters specify policy for discarding constituents, as
+described in the next section.  All remaining parameters are for specifying
+metadata that are simply passed through into the output.  They are all
+optional; however, to get acceptable results, it is highly advisable to
+specify at least the station name, units and timezone.
+
+The time zone is specified with a zoneinfo identifier such as
+:America/New_York.  There is no really good documentation on zoneinfo, so see
+"List of likely choices for timezone" at the end of this README.
+
+Usage: harmgen [--name "Station name"]
+               [--original_name "Original station name"]
+               [--station_id_context "Organization assigning ID"]
+               [--station_id "ID"]
+               [--coordinates N.NNNNN N.NNNNN]    -90..90 °N  -180..180 °E
+               [--timezone "Zoneinfo time zone spec"]
+               [--country "Country"]
+               [--units meters|feet|knots]
+               [--min_dir N]                       0..359 ° true
+               [--max_dir N]                       0..359 ° true
+               [--legalese "1-line legal notice"]
+               [--notes "Warnings to users"]
+               [--comments "Info about this station"]
+               [--source "Harmgen using data from XYZ"]
+               [--restriction "Public domain"]
+               [--xfields "EtCetera:  Et cetera."]
+               [--datum "Lowest Astronomical Tide"]
+               [--datum_override N.NN]
+               [--maxconstituents N]
+               [--minamplitude N.NN]
+               [--force]
+               congen-input-file.txt
+               time-series-input-file.txt
+               output-file.sql
+
+When executed, the harmgen program will do the following:
+
+  (1)  Generate a file called "oct_input" containing the data needed
+  by the Octave script.
+
+  (2)  Invoke harmgen.sh, which runs the Octave script.  It may run
+  for a long time and consume lots of memory with no visible
+  progress.  In the end, the file "oct_output" is created.
+
+  (3)  When the script exits, harmgen reads the contents of
+  oct_output, makes final adjustments, and writes the output to
+  output-file.sql.
+
+The intermediate files "oct_input" and "oct_output" will be left laying
+around so that you can inspect or reuse them if troubleshooting is needed.
+Otherwise, to avoid confusion, please delete them before running harmgen
+again.
+
+
+Discarding constituents
+-----------------------
+
+Two command-line options allow you to set policy on discarding constituents.
+They can be used together without conflict.
+
+--maxconstituents N    Sort constituents by descending amplitude and retain
+                       at most the top N of them.
+
+--minamplitude N.NN    Discard constituents with amplitude less than the
+                       specified number.
+
+
+Using the new station
+---------------------
+
+If all you wanted was the harmonic constants, you can extract them from the
+human-readable output-file.sql using a text editor and take it from there.
+However, the output of Harmgen is designed to be used with Harmbase2, a
+harmonic constant management package that handles all the details.  Harmbase2
+is available from http://www.flaterco.com/xtide/files.html#experts.
+
+To create a TCD file containing only the new station, you would load the
+empty Harmbase2 schema, load the new station, and export:
+
+bash-3.1$ createdb harmbase2
+bash-3.1$ psql harmbase2 < harmbase2.sql
+bash-3.1$ psql harmbase2 < output-file.sql 
+bash-3.1$ hbexport --optimize test.tcd
+
+XTide is able to use multiple TCD files simultaneously, so you just need to
+add the new TCD file to your HFILE_PATH:
+
+export HFILE_PATH=/usr/local/share/xtide/harmonics.tcd:/home/somebody/test.tcd
+
+If you want to go to the trouble of merging your new data into a distributed
+TCD file, you just need to substitute that TCD file's database dump for the
+empty harmbase2.sql schema:
+
+bash-3.1$ createdb harmbase2
+bash-3.1$ psql harmbase2 < harmonics-dwf-20*.sql
+bash-3.1$ psql harmbase2 < output-file.sql 
+bash-3.1$ hbexport --optimize test.tcd
+
+The most recent database dump is available from
+http://www.flaterco.com/xtide/files.html#harmonicsfiles.
+
+
+Caution
+-------
+
+The interface between Harmgen and Harmbase2 depends on canonical naming of
+constituents.  If you rename constituents, modify constituent definitions or
+create new ones in the input to Harmgen, you must make the same changes in
+the constituents table of the Harmbase2 schema.  There is no way for
+Harmbase2 to defend against semantic mismatches when all it gets is a name.
+You just have to use the same definitions in both places.
+
+
+Troubleshooting
+---------------
+
+1.  Harmgen dies with the following errors:
+      sh: /usr/local/libexec/harmgen.sh: No such file or directory
+      oct_output: No such file or directory
+
+    Cause:  You didn't do 'make install' before running harmgen.
+
+2.  libc aborts with a free() or invalid pointer error, Octave dies
+    with "error: memory exhausted" or Octave gets killed after
+    thrashing for a while.
+
+    Most likely cause:  You ran out of memory.  There are three ways
+    to fix this:
+
+    1.  Reduce the number of constituents in the Congen input file.
+    2.  Reduce the number of observations in the time series.
+    3.  Add memory.
+
+    Once you determine which constituents aren't going to get any
+    amplitude you can delete those and start over with more observations.
+
+3.  Predictions are off by some even multiple of hours.
+
+    Possible cause #1:  Wrong timezone.  In this case, the predictions
+    aren't actually *wrong*, they are just expressed in the wrong time
+    zone (e.g., 4 PM Central Time is equivalent to 5 PM Eastern Time).
+
+    Possible cause #2:  Wrong conversion of time series.  The
+    timestamps in the time series file are expressed in seconds since
+    1970-01-01 00:00 UTC.  If you did this conversion from 1970-01-01
+    00:00 local time then everything will be wrong.
+
+    Possible cause #3:  You changed the meridian in the SQL output
+    from 0:00.  NEVER do that!  You are allowed to change the
+    timezone, but DO NOT change the meridian from 0:00.
+
+4.  Predictions are off by an average of 25 minutes.
+
+    The predictions are actually off by 12 hours.  The most significant
+    constituent of tides cycles in 12 hours 25 minutes, so in many cases a
+    12 hour shift is easy to overlook.  See previous problem.
+
+5.  The results are complete garbage.
+
+    Witnessed with Octave 3.0.0.  Upgrading to Octave 3.0.1 solved the
+    problem.
+
+
+References
+----------
+
+Manual of Harmonic Analysis and Prediction of Tides.  Special Publication
+No. 98, Revised (1940) Edition (reprinted 1958 with corrections; reprinted
+again 1994).  United States Government Printing Office, 1994.
+
+Computer Applications to Tides in the National Ocean Survey.  Supplement to
+Manual of Harmonic Analysis and Prediction of Tides (Special Publication
+No. 98).  National Ocean Service, National Oceanic and Atmospheric
+Administration, U.S. Department of Commerce, January 1982.
+
+
+List of likely choices for timezone
+-----------------------------------
+
+The following list is from an old version of zoneinfo.  For the latest, see
+the data distribution available at https://www.iana.org/time-zones.
+
+Legal values of timezone include, but are not limited to:
+
+:Africa/Abidjan
+:Africa/Accra
+:Africa/Asmera
+:Africa/Banjul
+:Africa/Bissau
+:Africa/Brazzaville
+:Africa/Cairo
+:Africa/Casablanca
+:Africa/Conakry
+:Africa/Dakar
+:Africa/Dar_es_Salaam
+:Africa/Djibouti
+:Africa/Douala
+:Africa/Freetown
+:Africa/Johannesburg
+:Africa/Kinshasa
+:Africa/Lagos
+:Africa/Libreville
+:Africa/Lome
+:Africa/Luanda
+:Africa/Malabo
+:Africa/Maputo
+:Africa/Mogadishu
+:Africa/Monrovia
+:Africa/Nairobi
+:Africa/Nouakchott
+:Africa/Sao_Tome
+:Africa/Tunis
+:Africa/Windhoek
+:America/Adak
+:America/Anchorage
+:America/Antigua
+:America/Atka
+:America/Barbados
+:America/Belize
+:America/Bogota
+:America/Buenos_Aires
+:America/Caracas
+:America/Cayenne
+:America/Chicago
+:America/Costa_Rica
+:America/Curacao
+:America/Edmonton
+:America/El_Salvador
+:America/Ensenada
+:America/Godthab
+:America/Goose_Bay
+:America/Grand_Turk
+:America/Grenada
+:America/Guadeloupe
+:America/Guayaquil
+:America/Guyana
+:America/Halifax
+:America/Havana
+:America/Hermosillo
+:America/Iqaluit
+:America/Jamaica
+:America/Juneau
+:America/Lima
+:America/Los_Angeles
+:America/Martinique
+:America/Mazatlan
+:America/Mexico_City
+:America/Montevideo
+:America/Montreal
+:America/Nassau
+:America/New_York
+:America/Nome
+:America/Panama
+:America/Paramaribo
+:America/Port_of_Spain
+:America/Port-au-Prince
+:America/Puerto_Rico
+:America/Santiago
+:America/Santo_Domingo
+:America/Sao_Paulo
+:America/St_Johns
+:America/St_Lucia
+:America/St_Thomas
+:America/Thule
+:America/Tijuana
+:America/Vancouver
+:America/Winnipeg
+:America/Yakutat
+:America/Yellowknife
+:Antarctica/Casey
+:Antarctica/Davis
+:Antarctica/Mawson
+:Antarctica/McMurdo
+:Asia/Aden
+:Asia/Baghdad
+:Asia/Bahrain
+:Asia/Bangkok
+:Asia/Calcutta
+:Asia/Colombo
+:Asia/Dacca
+:Asia/Dubai
+:Asia/Hong_Kong
+:Asia/Jakarta
+:Asia/Jayapura
+:Asia/Kamchatka
+:Asia/Karachi
+:Asia/Kuala_Lumpur
+:Asia/Kuwait
+:Asia/Magadan
+:Asia/Manila
+:Asia/Muscat
+:Asia/Phnom_Penh
+:Asia/Pyongyang
+:Asia/Qatar
+:Asia/Rangoon
+:Asia/Riyadh
+:Asia/Saigon
+:Asia/Seoul
+:Asia/Shanghai
+:Asia/Singapore
+:Asia/Taipei
+:Asia/Tehran
+:Asia/Tokyo
+:Asia/Ujung_Pandang
+:Asia/Vladivostok
+:Atlantic/Azores
+:Atlantic/Bermuda
+:Atlantic/Canary
+:Atlantic/Cape_Verde
+:Atlantic/Faeroe
+:Atlantic/Madeira
+:Atlantic/Reykjavik
+:Atlantic/St_Helena
+:Atlantic/Stanley
+:Australia/Adelaide
+:Australia/Brisbane
+:Australia/Darwin
+:Australia/Hobart
+:Australia/Lord_Howe
+:Australia/Melbourne
+:Australia/Perth
+:Australia/Sydney
+:Europe/Amsterdam
+:Europe/Belfast
+:Europe/Berlin
+:Europe/Brussels
+:Europe/Copenhagen
+:Europe/Dublin
+:Europe/Gibraltar
+:Europe/Lisbon
+:Europe/Ljubljana
+:Europe/London
+:Europe/Madrid
+:Europe/Moscow
+:Europe/Oslo
+:Europe/Paris
+:Europe/Rome
+:Europe/Zagreb
+:Indian/Antananarivo
+:Indian/Christmas
+:Indian/Cocos
+:Indian/Mayotte
+:Indian/Reunion
+:Pacific/Apia
+:Pacific/Auckland
+:Pacific/Easter
+:Pacific/Efate
+:Pacific/Fiji
+:Pacific/Funafuti
+:Pacific/Galapagos
+:Pacific/Gambier
+:Pacific/Guadalcanal
+:Pacific/Guam
+:Pacific/Honolulu
+:Pacific/Johnston
+:Pacific/Kwajalein
+:Pacific/Majuro
+:Pacific/Marquesas
+:Pacific/Midway
+:Pacific/Niue
+:Pacific/Norfolk
+:Pacific/Noumea
+:Pacific/Pago_Pago
+:Pacific/Palau
+:Pacific/Ponape
+:Pacific/Port_Moresby
+:Pacific/Rarotonga
+:Pacific/Saipan
+:Pacific/Tahiti
+:Pacific/Tarawa
+:Pacific/Tongatapu
+:Pacific/Truk
+:Pacific/Wake
+:Pacific/Wallis
+:Pacific/Yap
+
+
+-- DWF
+dave@flaterco.com
