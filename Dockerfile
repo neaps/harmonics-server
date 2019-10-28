@@ -19,7 +19,5 @@ WORKDIR /usr/src/app
 COPY app .
 
 RUN npm install
-RUN  harmgen /usr/local/share/harmgen/congen_1yr.txt levels-hourly.txt out.json
 
-#CMD ["less", "out.json"]
 CMD [ "npm", "start" ]
