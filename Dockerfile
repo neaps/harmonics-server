@@ -16,8 +16,11 @@ RUN cd harmgen-json-3.1.3/ && ./configure  && make && make install
 
 
 WORKDIR /usr/src/app
-COPY app .
 
+COPY app/package*.json ./
 RUN npm install
 
+COPY app .
+
+EXPOSE 8080
 CMD [ "npm", "start" ]
