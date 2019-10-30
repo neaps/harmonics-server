@@ -24,7 +24,7 @@ app.post('/api/v1/generate', (request, response) => {
   request.body.levels.forEach(level => {
     levels.push(`${level.t} ${level.v}`)
   })
-  fs.writeFileSync(inputFile, levels.join(/\n/))
+  fs.writeFileSync(inputFile, levels.join('\n'))
   response.end(JSON.stringify({ id: request.body.uuid }))
   spawn('harmgen', [
     '/usr/local/share/harmgen/congen_1yr.txt',
@@ -34,12 +34,14 @@ app.post('/api/v1/generate', (request, response) => {
 })
 
 app.get('/api/v1/status/:id', (request, response) => {
-  const exists = fs.stat(`/tmp/result-${request.params.id}.json`)
+  const exists = fs.existsSync(`/tmp/result-${request.params.id}.json`)
   response.end(JSON.stringify({ done: exists }))
 })
 
 app.get('/api/v1/get/:id', (request, response) => {
-  response.end(fs.readFileSync(`/tmp/result-${request.params.id}.json`))
+  response.end(fs.readFileSync(`/tmp/result-${request.params.id}.json`, 'utf8'))
 })
 
-app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+app.listen(port, () =>
+  console.log(`Tide harmonics API listening on port ${port}!`)
+)
