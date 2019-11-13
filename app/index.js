@@ -3,9 +3,11 @@ const express = require('express')
 const spawn = require('child_process').spawn
 const bodyParser = require('body-parser')
 const fs = require('fs')
+const moment = require('moment')
 const app = express()
 const port = 8080
 
+/** TODO - convert "T" from ISO to timestamp! */
 app.use(bodyParser.json({ limit: '50mb' }))
 
 app.all('/api/*', (request, response, next) => {
@@ -22,7 +24,7 @@ app.post('/api/v1/generate', (request, response) => {
   const levels = []
   const inputFile = `/tmp/${request.body.uuid}.txt`
   request.body.levels.forEach(level => {
-    levels.push(`${level.t} ${level.v}`)
+    levels.push(`${moment(level.t).unix()} ${level.v}`)
   })
   fs.writeFileSync(inputFile, levels.join('\n'))
   response.end(JSON.stringify({ id: request.body.uuid }))

@@ -1,5 +1,7 @@
 {
-  "name": "xtide-nodejs-docker",
+  "name": "harmonics-server",
+  "description": "A tidal harmonic generator API",
+  "repository": "https://github.com/neaps/harmonics-server",
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
@@ -9,6 +11,7 @@
   "dependencies": {
     "body-parser": "^1.19.0",
     "dotenv": "^8.2.0",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "moment": "^2.24.0"
   }
 }
