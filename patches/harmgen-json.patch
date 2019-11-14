@@ -1,0 +1,109 @@
+628,722c628,639
+<   // Write SQL file.
+<   fprintf (SQLfile, "\
+< -- Harmonic constants derived by Harmgen.  This is an SQL script that\n\
+< -- adds the new station to an existing Harmbase2 database:\n\
+< --     psql harmbase2 < this-script.sql\n\
+< -- Harmbase2 is available from:\n\
+< --     http://www.flaterco.com/xtide/files.html#experts\n\
+< \n\
+< -- Load the new harmonic constants into a temporary table.\n\
+< create temp table tempconstants (name text,\n\
+<                                  phase double precision,\n\
+<                                  amp double precision);\n\
+< copy tempconstants (name, amp, phase) from stdin CSV;\n");
+< 
+<   for (unsigned i(0); i<constituents.size(); ++i)
+<     fprintf (SQLfile, "%s, %.4f, %s\n",
+<       constituents[i].name.c_str(), amp[i],
+<       Congen::normalize (phase[i], 2).c_str());
+< 
+<   fprintf (SQLfile, "\\.\n\
+< \n\
+< -- Create the new station.\n\
+< with newindex as (\n\
+<   insert into data_sets (name,\n\
+< 			 original_name,\n\
+< 			 station_id_context,\n\
+< 			 station_id,\n\
+< 			 lat,\n\
+< 			 lng,\n\
+< 			 timezone,\n\
+< 			 country,\n\
+< 			 units,\n\
+< 			 min_dir,\n\
+< 			 max_dir,\n\
+< 			 legalese,\n\
+< 			 notes,\n\
+< 			 comments,\n\
+< 			 source,\n\
+< 			 restriction,\n\
+< 			 xfields,\n\
+< 			 meridian,\n\
+< 			 datumkind,\n\
+< 			 datum,\n\
+< 			 months_on_station,\n\
+< 			 last_date_on_station)\n\
+<     values (%s,\n\
+< 	    %s,\n\
+< 	    %s,\n\
+< 	    %s,\n\
+< 	    %s,\n\
+< 	    %s,\n\
+< 	    %s,\n\
+< 	    %s,\n\
+< 	    %s,\n\
+< 	    %s,\n\
+< 	    %s,\n\
+< 	    %s,\n\
+< 	    %s,\n\
+< 	    %s,\n\
+< 	    %s,\n\
+< 	    %s,\n\
+< 	    %s,\n\
+< 	    '0:00',\n\
+< 	    %s,\n\
+< 	    %.4f,\n\
+< 	    %u,\n\
+< 	    'J%" PRId64 "')\n\
+<     returning index)\n\
+<   insert into constants (index, name, phase, amp)\n\
+<     select index, name, phase, amp from newindex cross join tempconstants;\n\
+< \n\
+< -- End of script\n",
+< 
+< 	   quote(ds_name).c_str(),
+<            quote(ds_original_name).c_str(),
+<            quote(ds_station_id_context).c_str(),
+<            quote(ds_station_id).c_str(),
+<            quote(ds_latitude,haveCoordinates).c_str(),
+<            quote(ds_longitude,haveCoordinates).c_str(),
+< 	   quote(ds_timezone).c_str(),
+< 	   quote(ds_country).c_str(),
+< 	   quote(ds_units).c_str(),
+<            quote(ds_min_dir,haveMinDir).c_str(),
+<            quote(ds_max_dir,haveMaxDir).c_str(),
+< 	   quote(ds_legalese).c_str(),
+< 	   quote(ds_notes).c_str(),
+< 	   quote(ds_comments).c_str(),
+< 	   quote(ds_source).c_str(),
+< 	   quote(ds_restriction).c_str(),
+< 	   quote(ds_xfields).c_str(),
+< 	   quote(ds_datum).c_str(),
+<            (haveDatumOverride ? datumOverride : z0),
+<   (unsigned)floor((lastTimestamp-firstTimestamp)/(double)avgSecPerMonth+.5),
+< 	   lastTimestamp / secPerDay + epochJulian
+<   );
+---
+>   fprintf(SQLfile, "{\n");
+>   for (unsigned i(0); i < constituents.size(); ++i)
+>   {
+>     fprintf(SQLfile, "\"%s\": {\"amplitude\": %.4f, \"phase\": %s}",
+>             constituents[i].name.c_str(), amp[i],
+>             Congen::normalize(phase[i], 2).c_str());
+>     if (i + 1 < constituents.size())
+>     {
+>       fprintf(SQLfile, ",\n");
+>     }
+>   }
+>   fprintf(SQLfile, "\n}\n");
