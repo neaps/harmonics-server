@@ -5,7 +5,7 @@ const bodyParser = require('body-parser')
 const fs = require('fs')
 const moment = require('moment')
 const app = express()
-const port = 8080
+const port = process.env.PORT ? process.env.PORT : 8080
 
 /** TODO - convert "T" from ISO to timestamp! */
 app.use(bodyParser.json({ limit: '50mb' }))
@@ -27,12 +27,12 @@ app.post('/api/v1/generate', (request, response) => {
     levels.push(`${moment(level.t).unix()} ${level.v}`)
   })
   fs.writeFileSync(inputFile, levels.join('\n'))
-  response.end(JSON.stringify({ id: request.body.uuid }))
   spawn('harmgen', [
     '/usr/local/share/harmgen/congen_1yr.txt',
     inputFile,
     `/tmp/result-${request.body.uuid}.json`
   ])
+  response.end(JSON.stringify({ id: request.body.uuid }))
 })
 
 app.get('/api/v1/status/:id', (request, response) => {
@@ -41,7 +41,11 @@ app.get('/api/v1/status/:id', (request, response) => {
 })
 
 app.get('/api/v1/get/:id', (request, response) => {
-  response.end(fs.readFileSync(`/tmp/result-${request.params.id}.json`, 'utf8'))
+  const result = fs.readFileSync(
+    `/tmp/result-${request.params.id}.json`,
+    'utf8'
+  )
+  response.end(result)
 })
 
 app.listen(port, () =>
