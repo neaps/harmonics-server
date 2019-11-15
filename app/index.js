@@ -5,6 +5,7 @@ const bodyParser = require('body-parser')
 const fs = require('fs')
 const moment = require('moment')
 const app = express()
+const expressWs = require('express-ws')(app)
 const port = process.env.PORT ? process.env.PORT : 8080
 
 /** TODO - convert "T" from ISO to timestamp! */
@@ -27,12 +28,38 @@ app.post('/api/v1/generate', (request, response) => {
     levels.push(`${moment(level.t).unix()} ${level.v}`)
   })
   fs.writeFileSync(inputFile, levels.join('\n'))
-  spawn('harmgen', [
-    '/usr/local/share/harmgen/congen_1yr.txt',
-    inputFile,
-    `/tmp/result-${request.body.uuid}.json`
-  ])
   response.end(JSON.stringify({ id: request.body.uuid }))
+})
+
+app.ws('/', function(websocket, request) {
+  websocket.on('message', function(message) {
+    message = JSON.parse(message)
+    if (message.uuid) {
+      const child = spawn('harmgen', [
+        '/usr/local/share/harmgen/congen_1yr.txt',
+        `/tmp/${message.uuid}.txt`,
+        `/tmp/result-${message.uuid}.json`
+      ])
+
+      child.stdout.on('data', data => {
+        websocket.send(
+          JSON.stringify({ type: 'message', data: data.toString() })
+        )
+      })
+
+      child.stderr.on('data', data => {
+        websocket.send(JSON.stringify({ type: 'error', data: data.toString() }))
+      })
+
+      child.on('close', code => {
+        websocket.send(JSON.stringify({ type: 'close', data: code }))
+      })
+
+      child.on('exit', code => {
+        websocket.send(JSON.stringify({ type: 'exit', data: code }))
+      })
+    }
+  })
 })
 
 app.get('/api/v1/status/:id', (request, response) => {
